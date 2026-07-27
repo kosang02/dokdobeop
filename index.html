@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>독도법 연습장</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --paper:#F7F4E9; --card:#FFFEF6; --ink:#26251C; --muted:#6E6A56; --line:#DFD9C2;
+  --accent:#55632F; --accent-ink:#F7F4E9; --brown:#A0653B; --water:#33698C;
+  --danger:#B23A2E; --ok:#3F7A46; --amber:#C98A2B;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#181A12; --card:#20231A; --ink:#E7E4D2; --muted:#9A957C;
+         --line:#343827; --accent:#93A257; --accent-ink:#181A12; }
+}
+:root[data-theme="dark"]{ --paper:#181A12; --card:#20231A; --ink:#E7E4D2; --muted:#9A957C;
+         --line:#343827; --accent:#93A257; --accent-ink:#181A12; }
+:root[data-theme="light"]{ --paper:#F7F4E9; --card:#FFFEF6; --ink:#26251C; --muted:#6E6A56;
+         --line:#DFD9C2; --accent:#55632F; --accent-ink:#F7F4E9; }
+
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  line-height:1.55; }
+.mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+
+header{ max-width:1180px; margin:0 auto; padding:28px 20px 8px; }
+.eyebrow{ font-size:11px; letter-spacing:.22em; color:var(--accent); font-weight:700; }
+h1{ margin:2px 0 4px; font-size:30px; letter-spacing:-.01em; text-wrap:balance; }
+.sub{ margin:0; color:var(--muted); font-size:14px; max-width:62ch; }
+
+.wrap{ max-width:1180px; margin:14px auto 60px; padding:0 20px;
+  display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:20px; align-items:start; }
+@media (max-width:940px){ .wrap{ grid-template-columns:1fr; } }
+
+.mapmeta{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12.5px; color:var(--muted);
+  padding:8px 2px; }
+.mapmeta b{ color:var(--ink); font-weight:600; }
+.mapframe{ position:relative; border:1.5px solid var(--ink); background:#F7F4E9;
+  box-shadow:0 2px 10px rgba(0,0,0,.10); }
+canvas{ display:block; width:100%; height:auto; }
+.legend{ display:flex; flex-wrap:wrap; gap:4px 16px; font-size:12px; color:var(--muted); padding:8px 2px; }
+
+/* 좌표 판독판 오버레이 */
+#scale{ position:absolute; left:8%; top:8%; width:20%; aspect-ratio:1/1;
+  cursor:grab; touch-action:none; display:none; }
+#scale.on{ display:block; }
+#scale svg{ display:block; width:100%; height:100%; overflow:visible; }
+#scale.grab{ cursor:grabbing; }
+#scale.snapped{ filter:drop-shadow(0 0 7px rgba(184,122,24,.95)); }
+
+.tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:2px 2px 8px; }
+.tools span{ font-size:12.5px; color:var(--muted); }
+.tools button{ padding:6px 13px; font-size:12.5px; font-weight:600; cursor:pointer;
+  background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:4px; }
+.tools button.on{ background:var(--amber); color:#fff; border-color:var(--amber); }
+
+#prot{ position:absolute; left:28%; top:24%; width:40%; aspect-ratio:1/1;
+  display:none; cursor:grab; touch-action:none; }
+#prot.on{ display:block; }
+#ruler{ position:absolute; left:14%; top:56%; width:60%; aspect-ratio:468/46;
+  display:none; cursor:grab; touch-action:none; transform-origin:1.7% 50%; }
+#ruler.on{ display:block; }
+#prot.grab, #ruler.grab{ cursor:grabbing; }
+#prot svg, #ruler svg, #scale svg{ overflow:visible; }
+#ruler .rh, #prot .rh{ position:absolute; right:-15px; top:50%; transform:translateY(-50%);
+  width:24px; height:24px; border-radius:50%; background:var(--amber); color:#fff;
+  font-size:13px; line-height:24px; text-align:center; cursor:crosshair;
+  touch-action:none; user-select:none; }
+#prot .rh{ background:#4A6E93; }
+#ruler .azread, #prot .azread{ position:absolute; right:14px; top:-24px; font-size:11px;
+  background:var(--card); border:1px solid var(--line); border-radius:3px;
+  padding:1px 6px; color:var(--ink); white-space:nowrap; }
+#prot .azread{ right:auto; left:50%; margin-left:-34px; }
+
+.panel{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:16px; }
+.tabs{ display:flex; gap:6px; margin-bottom:14px; }
+.tabs button{ flex:1; padding:8px 4px; font-size:13px; font-weight:600; color:var(--muted);
+  background:transparent; border:1px solid var(--line); border-radius:4px; cursor:pointer; }
+.tabs button.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.tabs button:focus-visible, button:focus-visible, input:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px; }
+
+h2{ font-size:15px; margin:0 0 8px; }
+.q{ background:var(--paper); border:1px solid var(--line); border-radius:4px;
+  padding:10px 12px; font-size:14px; margin-bottom:12px; }
+.q .big{ font-size:18px; font-weight:700; }
+.row{ display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+.row label{ font-size:13px; color:var(--muted); min-width:96px; }
+input[type=text],input[type=number]{ font-size:16px; padding:7px 9px; width:130px;
+  border:1px solid var(--line); border-radius:4px; background:var(--paper); color:var(--ink);
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+button.act{ padding:8px 14px; font-size:13.5px; font-weight:600; cursor:pointer;
+  background:var(--accent); color:var(--accent-ink); border:none; border-radius:4px; }
+button.ghost{ padding:8px 12px; font-size:13px; cursor:pointer; background:transparent;
+  color:var(--ink); border:1px solid var(--line); border-radius:4px; }
+button.act:hover{ filter:brightness(1.08); }
+button.ghost:hover{ border-color:var(--muted); }
+
+#feedback{ min-height:24px; margin:12px 0; padding:10px 12px; border-radius:4px;
+  font-size:13.5px; display:none; }
+#feedback.ok{ display:block; background:color-mix(in srgb, var(--ok) 12%, transparent);
+  border:1px solid var(--ok); }
+#feedback.bad{ display:block; background:color-mix(in srgb, var(--danger) 10%, transparent);
+  border:1px solid var(--danger); }
+#feedback.info{ display:block; background:var(--paper); border:1px solid var(--line); }
+
+.score{ font-size:12.5px; color:var(--muted); margin-bottom:12px; }
+.btns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+details{ margin-top:14px; font-size:13px; }
+summary{ cursor:pointer; font-weight:600; color:var(--accent); }
+details p, details li{ color:var(--muted); }
+details .mono{ color:var(--ink); }
+.units{ display:flex; gap:12px; font-size:13px; margin-bottom:10px; color:var(--muted); }
+.obs{ font-size:13.5px; background:var(--paper); border:1px solid var(--line);
+  border-radius:4px; padding:8px 12px; margin-bottom:10px; }
+.obs b{ font-weight:700; }
+#decl{ margin-top:8px; }
+hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
+@media (prefers-reduced-motion: no-preference){
+  .tabs button, button.act, button.ghost{ transition:background .15s, color .15s, border-color .15s; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">FIELD MAP READING · 야외기동 예습</div>
+  <h1>독도법 연습장</h1>
+  <p class="sub">군용 지형도에서 좌표 판독과 방위각을 이용한 자기 위치 찾기(후방교회법)를 연습합니다. 지도는 매번 새로 생성됩니다.</p>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="mapmeta mono" id="mapmeta"></div>
+    <div class="tools"><span>도구:</span>
+      <button id="tgScale">좌표판독판</button>
+      <button id="tgProt">각도기</button>
+      <button id="tgRuler">축척자</button>
+    </div>
+    <div class="mapframe" id="frame">
+      <canvas id="map" width="780" height="780"></canvas>
+      <div id="scale" aria-label="좌표 판독판 (드래그로 이동)">
+        <svg viewBox="0 0 156 156" id="scaleSvg"></svg>
+      </div>
+      <div id="prot" aria-label="투명 각도기 (드래그로 이동, 손잡이로 회전)">
+        <svg viewBox="0 0 200 200" id="protSvg"></svg>
+        <div class="azread mono" id="protRead">회전 0°</div>
+        <div class="rh" title="돌려서 회전 · 더블클릭하면 원위치">↻</div>
+      </div>
+      <div id="ruler" aria-label="축척자 (드래그로 이동, 손잡이로 회전)">
+        <svg viewBox="0 0 468 46" id="rulerSvg"></svg>
+        <div class="azread mono" id="azread">90°</div>
+        <div class="rh" title="돌려서 회전">↻</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span>▲ 산정상·삼각점(표고)</span><span>◉ 통신탑</span><span>■ 마을회관</span>
+      <span style="color:var(--water)">◍ 저수지</span>
+      <span style="color:var(--brown)">— 등고선(간격 20m)</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs" role="tablist">
+      <button id="tab1" class="on">좌표 판독</button>
+      <button id="tab2">위치 찾기</button>
+      <button id="tab3">후방교회법</button>
+    </div>
+    <div class="score" id="score">정답 0 / 시도 0</div>
+
+    <section id="m1">
+      <h2>지도의 표적 → 8자리 좌표</h2>
+      <div class="q">지도의 <b style="color:var(--danger)">붉은 표적 ✕</b>이 있는 지점의 <span class="big">8자리 좌표</span>를 판독하세요. (10m 단위, ±30m 인정)</div>
+      <div class="row"><label for="in1">좌표 (8자리)</label>
+        <input type="text" id="in1" inputmode="numeric" maxlength="9" placeholder="예: 52344781">
+        <button class="act" id="ok1">확인</button></div>
+      <details><summary>판독 요령</summary>
+        <p>① 표적이 든 1km 격자 남서(왼쪽 아래) 모서리의 세로선 숫자(동서)와 가로선 숫자(남북)를 읽는다 → 앞 2자리씩.<br>
+        ② 판독판의 <b>빨간 0 모서리(우상단)를 표적 위에</b> 놓는다. 상단 눈금이 <b>서쪽(왼쪽) 격자선</b>과 만나는 값 = 동서 셋째 자리(100m), 우측 눈금이 <b>남쪽(아래) 격자선</b>과 만나는 값 = 남북 셋째 자리(100m).<br>
+        ③ 넷째 자리(10m)는 눈금과 눈금 사이를 10등분해 어림한다.<br>
+        ④ <span class="mono">동서 4자리 + 남북 4자리</span> 순으로 붙인다. 항상 "오른쪽으로, 그다음 위로".</p></details>
+    </section>
+
+    <section id="m2" hidden>
+      <h2>8자리 좌표 → 지도에서 클릭</h2>
+      <div class="q">좌표 <span class="big mono" id="q2"></span> 지점을 지도에서 <b>클릭</b>하세요.</div>
+      <details><summary>요령</summary>
+        <p>앞 2자리씩으로 1km 격자를 찾고, 셋째 자리(100m)·넷째 자리(10m)로 격자 안 위치를 짚습니다. 오차 약 150m까지 정답으로 인정합니다.</p></details>
+    </section>
+
+    <section id="m3" hidden>
+      <h2>방위각으로 자기 위치 찾기</h2>
+      <div class="units">
+        단위: <label><input type="radio" name="unit" value="deg" checked> 도(°)</label>
+        <label><input type="radio" name="unit" value="mil"> 밀</label>
+      </div>
+      <div class="q">현 위치를 모릅니다. 나침반으로 두 지형지물을 관측했습니다. <b>도자각을 적용해 도북 역방위각을 계산</b>하고 선을 그어 자기 위치의 8자리 좌표를 구하세요.</div>
+      <div class="obs" id="obs"></div>
+      <div class="row"><label id="lb1" for="az1"></label>
+        <input type="number" id="az1" step="any" placeholder="도북 역방위각"></div>
+      <div class="row"><label id="lb2" for="az2"></label>
+        <input type="number" id="az2" step="any" placeholder="도북 역방위각"></div>
+      <p style="font-size:12.5px;color:var(--muted);margin:4px 0 8px;">역방위각을 입력하면 <b>즉시 지도에 선이 그어집니다.</b></p>
+      <div class="btns"><button class="act" id="drawBtn">선 다시 긋기</button>
+        <button class="ghost" id="clearBtn">선 지우기</button></div>
+      <hr>
+      <div class="row"><label for="in3">내 위치 좌표</label>
+        <input type="text" id="in3" inputmode="numeric" maxlength="9" placeholder="8자리">
+        <button class="act" id="ok3">확인</button></div>
+      <div class="btns"><button class="ghost" id="solBtn">정답·풀이 보기</button></div>
+      <svg id="decl" width="150" height="110" aria-label="도자각 도해"></svg>
+      <details><summary>후방교회법 순서</summary>
+        <ol style="padding-left:18px; margin:6px 0;">
+          <li>관측한 <b>자북방위각 − 도자각(서편각)</b> = 도북방위각</li>
+          <li>도북방위각 <b>± 180°(3200밀)</b> = 역방위각</li>
+          <li>각 지형지물에서 역방위각 방향으로 선을 긋는다</li>
+          <li>두 선의 <b>교차점이 내 위치</b> — 좌표를 판독한다</li>
+        </ol></details>
+    </section>
+
+    <div id="feedback" role="status" aria-live="polite"></div>
+    <div class="btns"><button class="act" id="newQ">새 문제</button>
+      <button class="ghost" id="newMap">새 지도 생성</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const KM=5, PXKM=156, TEN=PXKM/10, SIZE=KM*PXKM;
+const cv=document.getElementById('map'), ctx=cv.getContext('2d');
+const base=document.createElement('canvas'); base.width=base.height=SIZE;
+const bctx=base.getContext('2d');
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296;}}
+let rng, M={}; // 지도 상태
+let mode=1, tries=0, hits=0;
+let P1={}, P2={}, P3={}; // 각 모드의 현재 문제
+
+/* ---------- 지형·지도 생성 ---------- */
+function hAt(xk,yk){ let h=50;
+  for(const g of M.hills){ const dx=xk-g.x, dy=yk-g.y;
+    h+=g.a*Math.exp(-(dx*dx+dy*dy)/(2*g.s*g.s)); }
+  return Math.max(h,12); }
+
+function genMap(seed){
+  rng=mulberry32(seed); M={seed};
+  M.e0=10+((rng()*80)|0); M.n0=10+((rng()*80)|0);
+  M.gma=6+0.5*((rng()*9)|0);             // 도자각(서편각), 도 단위 6.0~10.0°
+  M.sheet="Ⅳ-"+(10+((rng()*80)|0));
+  M.hills=[];
+  for(let i=0;i<3;i++) M.hills.push({x:.7+rng()*3.6,y:.7+rng()*3.6,a:170+rng()*140,s:.5+rng()*.55});
+  const n=4+((rng()*4)|0);
+  for(let i=0;i<n;i++) M.hills.push({x:.3+rng()*4.4,y:.3+rng()*4.4,a:40+rng()*140,s:.4+rng()*.8});
+  for(let i=0;i<2;i++) M.hills.push({x:.5+rng()*4,y:.5+rng()*4,a:-(30+rng()*55),s:.8+rng()*.8});
+
+  // 표본 격자
+  const N=131, cell=SIZE/(N-1), F=[];
+  for(let j=0;j<N;j++){ F[j]=[];
+    for(let i=0;i<N;i++) F[j][i]=hAt(i*cell/PXKM, j*cell/PXKM); }
+
+  // 산정상(국지 최대)
+  let peaks=[];
+  for(let j=8;j<N-8;j++) for(let i=8;i<N-8;i++){
+    const v=F[j][i]; if(v<150) continue; let mx=true;
+    for(let dj=-1;dj<=1&&mx;dj++) for(let di=-1;di<=1;di++){
+      if(di===0&&dj===0) continue; if(F[j+dj][i+di]>=v){mx=false;break;} }
+    if(mx) peaks.push({x:i*cell,y:j*cell,h:Math.round(v)}); }
+  peaks.sort((a,b)=>b.h-a.h);
+  const kept=[];
+  for(const p of peaks){ if(kept.every(q=>Math.hypot(q.x-p.x,q.y-p.y)>0.9*PXKM)) kept.push(p);
+    if(kept.length>=4) break; }
+  M.marks = kept.map(p=>({x:p.x,y:p.y,type:'peak',name:p.h+'고지',h:p.h}));
+
+  // 저수지(최저점)
+  let mn=1e9, mi=0, mj=0;
+  for(let j=14;j<N-14;j++) for(let i=14;i<N-14;i++)
+    if(F[j][i]<mn){mn=F[j][i];mi=i;mj=j;}
+  M.marks.push({x:mi*cell,y:mj*cell,type:'lake',name:'저수지'});
+
+  // 인공 지물
+  for(const spec of [{type:'tower',name:'통신탑'},{type:'hall',name:'마을회관'}]){
+    for(let t=0;t<300;t++){ const x=(.5+rng()*4)*PXKM, y=(.5+rng()*4)*PXKM;
+      if(hAt(x/PXKM,y/PXKM)>190) continue;
+      if(M.marks.every(m=>Math.hypot(m.x-x,m.y-y)>0.75*PXKM)){
+        M.marks.push({x,y,type:spec.type,name:spec.name}); break; } } }
+
+  renderBase(F,N,cell);
+  document.getElementById('mapmeta').innerHTML =
+    `<span>축척 <b>1:25,000</b></span><span>등고선 간격 <b>20m</b></span>`+
+    `<span>도자각 <b>서편각 ${M.gma}°</b> (약 ${Math.round(M.gma*6400/360)}밀)</span>`+
+    `<span>도엽 <b>${M.sheet}</b></span>`;
+}
+
+function renderBase(F,N,cell){
+  const g=bctx;
+  g.fillStyle="#F7F4E9"; g.fillRect(0,0,SIZE,SIZE);
+  // 등고선
+  const t=(v1,v2,L)=>Math.min(1,Math.max(0,(L-v1)/(v2-v1)));
+  for(let L=40;L<=400;L+=20){
+    g.beginPath();
+    for(let j=0;j<N-1;j++) for(let i=0;i<N-1;i++){
+      const a=F[j][i],b=F[j][i+1],c=F[j+1][i+1],d=F[j+1][i];
+      let id=0; if(a>L)id|=8; if(b>L)id|=4; if(c>L)id|=2; if(d>L)id|=1;
+      if(id===0||id===15) continue;
+      const x=i*cell,y=j*cell;
+      const T=[x+cell*t(a,b,L),y], R=[x+cell,y+cell*t(b,c,L)];
+      const B=[x+cell*t(d,c,L),y+cell], Lf=[x,y+cell*t(a,d,L)];
+      const seg=(p,q)=>{g.moveTo(p[0],p[1]);g.lineTo(q[0],q[1]);};
+      switch(id){
+        case 1: case 14: seg(Lf,B); break;
+        case 2: case 13: seg(B,R); break;
+        case 3: case 12: seg(Lf,R); break;
+        case 4: case 11: seg(T,R); break;
+        case 5: seg(T,Lf); seg(B,R); break;
+        case 6: case 9: seg(T,B); break;
+        case 7: case 8: seg(T,Lf); break;
+        case 10: seg(T,R); seg(Lf,B); break; } }
+    g.strokeStyle="#A0653B"; g.globalAlpha=(L%100===0)?0.95:0.55;
+    g.lineWidth=(L%100===0)?1.5:0.7; g.stroke(); }
+  g.globalAlpha=1;
+
+  // 격자와 숫자
+  g.strokeStyle="#4A5A63"; g.lineWidth=0.9;
+  g.font="700 13px ui-monospace,Menlo,monospace"; g.fillStyle="#33414A";
+  for(let i=0;i<=KM;i++){ const p=i*PXKM;
+    g.beginPath(); g.moveTo(p,0); g.lineTo(p,SIZE); g.stroke();
+    g.beginPath(); g.moveTo(0,SIZE-p); g.lineTo(SIZE,SIZE-p); g.stroke(); }
+  for(let i=0;i<KM;i++){
+    halo(g, String(M.e0+i).padStart(2,'0'), i*PXKM+3, SIZE-6);
+    halo(g, String(M.n0+i).padStart(2,'0'), 4, i===0?SIZE-24:SIZE-i*PXKM-5); }
+
+  // 지형지물
+  for(const m of M.marks){
+    if(m.type==='peak'){ g.fillStyle="#26251C";
+      tri(g,m.x,m.y,7); halo(g,"▲"+m.h, m.x+8, m.y+4, "#26251C"); }
+    else if(m.type==='lake'){ g.fillStyle="rgba(51,105,140,.45)";
+      g.strokeStyle="#33698C"; g.lineWidth=1.4;
+      g.beginPath(); g.ellipse(m.x,m.y,44,26,0.4,0,7); g.fill(); g.stroke();
+      halo(g,m.name, m.x-14, m.y+4, "#33698C"); }
+    else if(m.type==='tower'){ g.strokeStyle="#26251C"; g.lineWidth=1.6;
+      g.beginPath(); g.moveTo(m.x-5,m.y+6); g.lineTo(m.x,m.y-8); g.lineTo(m.x+5,m.y+6); g.stroke();
+      g.fillStyle="#26251C"; g.beginPath(); g.arc(m.x,m.y-8,2.6,0,7); g.fill();
+      halo(g,m.name, m.x+8, m.y+4, "#26251C"); }
+    else{ g.fillStyle="#26251C"; g.fillRect(m.x-5,m.y-5,10,10);
+      halo(g,m.name, m.x+8, m.y+4, "#26251C"); } }
+}
+function tri(g,x,y,r){ g.beginPath(); g.moveTo(x,y-r); g.lineTo(x-r*0.9,y+r*0.7);
+  g.lineTo(x+r*0.9,y+r*0.7); g.closePath(); g.fill(); }
+function halo(g,txt,x,y,color){ g.save(); g.font="700 12px 'Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+  g.strokeStyle="#F7F4E9"; g.lineWidth=3; g.lineJoin="round"; g.strokeText(txt,x,y);
+  g.fillStyle=color||"#33414A"; g.fillText(txt,x,y); g.restore(); }
+
+/* ---------- 좌표 변환 ---------- */
+const CM=PXKM/100; // 10m가 화면에서 차지하는 픽셀
+function coordOf(x,y){ // 8자리(10m 단위)
+  const tx=Math.min(499,Math.floor(x/CM)), ty=Math.min(499,Math.floor((SIZE-y)/CM));
+  return String(M.e0*100+tx).padStart(4,'0')+String(M.n0*100+ty).padStart(4,'0'); }
+function pointOf(str){
+  const E=+str.slice(0,4), Nn=+str.slice(4);
+  const tx=E-M.e0*100, ty=Nn-M.n0*100;
+  if(tx<0||tx>499||ty<0||ty>499) return null;
+  return {x:(tx+0.5)*CM, y:SIZE-(ty+0.5)*CM}; }
+function azDeg(a,b){ const ang=Math.atan2(b.x-a.x, a.y-b.y);
+  return (ang/(2*Math.PI)*360+360)%360; }
+
+/* ---------- 그리기 ---------- */
+function draw(){
+  ctx.clearRect(0,0,SIZE,SIZE); ctx.drawImage(base,0,0);
+  if(mode===1&&P1.t){ mark(P1.t,"#B23A2E");
+    if(P1.done) ring(P1.t,"#3F7A46"); }
+  if(mode===2){ if(P2.guess) mark(P2.guess,"#B23A2E");
+    if(P2.done&&P2.truth) ring(P2.truth,"#3F7A46"); }
+  if(mode===3){
+    for(const r of P3.rays||[]) ray(r.from,r.az,"#B23A2E",false);
+    if((P3.rays||[]).length===2){ const ip=inter(P3.rays[0],P3.rays[1]);
+      if(ip) ring(ip,"#B23A2E"); }
+    if(P3.reveal){ for(const lm of P3.lms) ray(lm,(P3.trueAz(lm)+180)%360,"#3F7A46",true);
+      mark(P3.p,"#3F7A46"); } }
+}
+function mark(p,c){ ctx.strokeStyle=c; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(p.x-8,p.y-8); ctx.lineTo(p.x+8,p.y+8);
+  ctx.moveTo(p.x+8,p.y-8); ctx.lineTo(p.x-8,p.y+8); ctx.stroke(); }
+function ring(p,c){ ctx.strokeStyle=c; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.arc(p.x,p.y,11,0,7); ctx.stroke(); }
+function ray(from,az,c,dash){ const th=az/360*2*Math.PI;
+  ctx.save(); ctx.strokeStyle=c; ctx.lineWidth=1.6;
+  if(dash) ctx.setLineDash([7,5]);
+  ctx.beginPath(); ctx.moveTo(from.x,from.y);
+  ctx.lineTo(from.x+Math.sin(th)*2*SIZE, from.y-Math.cos(th)*2*SIZE);
+  ctx.stroke(); ctx.restore(); }
+function inter(r1,r2){
+  const u={x:Math.sin(r1.az/360*2*Math.PI),y:-Math.cos(r1.az/360*2*Math.PI)};
+  const v={x:Math.sin(r2.az/360*2*Math.PI),y:-Math.cos(r2.az/360*2*Math.PI)};
+  const d=u.x*(-v.y)-(-v.x)*u.y; if(Math.abs(d)<1e-9) return null;
+  const bx=r2.from.x-r1.from.x, by=r2.from.y-r1.from.y;
+  const t=(bx*(-v.y)+v.x*by)/d, s=(u.x*by-u.y*bx)/d;
+  if(t<0||s<0) return null;
+  const p={x:r1.from.x+u.x*t, y:r1.from.y+u.y*t};
+  if(p.x<0||p.x>SIZE||p.y<0||p.y>SIZE) return null;
+  return p; }
+
+/* ---------- 문제 생성 ---------- */
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function newQ1(){ P1={t:{x:rnd(30,SIZE-30),y:rnd(30,SIZE-30)},done:false};
+  document.getElementById('in1').value=""; }
+function newQ2(){ const t={x:rnd(30,SIZE-30),y:rnd(30,SIZE-30)};
+  P2={code:coordOf(t.x,t.y),done:false,guess:null};
+  P2.truth=pointOf(P2.code);
+  document.getElementById('q2').textContent=P2.code; }
+function newQ3(){
+  const cands=M.marks.filter(m=>m.type!=='lake');
+  for(let t=0;t<500;t++){
+    const p={x:rnd(0.8*PXKM,SIZE-0.8*PXKM), y:rnd(0.8*PXKM,SIZE-0.8*PXKM)};
+    const ok=cands.filter(c=>{ const d=Math.hypot(c.x-p.x,c.y-p.y);
+      return d>0.7*PXKM&&d<4.2*PXKM; });
+    if(ok.length<2) continue;
+    for(let u=0;u<ok.length;u++) for(let v=u+1;v<ok.length;v++){
+      let sep=Math.abs(azDeg(p,ok[u])-azDeg(p,ok[v]));
+      if(sep>180) sep=360-sep;
+      if(sep>28&&sep<152){
+        setQ3(p,[ok[u],ok[v]]); return; } } }
+  setQ3({x:SIZE/2,y:SIZE/2},[cands[0],cands[1]]); // 안전장치
+}
+function setQ3(p,lms){
+  P3={p, lms, rays:[], reveal:false, done:false};
+  P3.obs=P3.lms.map(lm=>Math.round(((azDeg(P3.p,lm)+M.gma)%360)*2)/2%360);
+  P3.trueAz=lm=>{ const i=P3.lms.indexOf(lm);
+    return ((P3.obs[i]-M.gma)%360+360)%360; };
+  renderObs();
+}
+function unit(){ return document.querySelector('input[name=unit]:checked').value; }
+function fmtAz(d){ return unit()==='deg' ? (Math.round(d*10)/10)+"°"
+  : Math.round(d*6400/360).toLocaleString()+"밀"; }
+function renderObs(){
+  const o=document.getElementById('obs');
+  o.innerHTML = `도자각: <b>서편각 ${fmtAz(M.gma)}</b><br>`+
+    P3.lms.map((lm,i)=>`관측 ${i+1} — <b>${lm.name}</b> 방향 자북방위각 <b class="mono">${fmtAz(P3.obs[i])}</b>`).join('<br>');
+  document.getElementById('lb1').textContent=P3.lms[0].name+" 기준";
+  document.getElementById('lb2').textContent=P3.lms[1].name+" 기준";
+  document.getElementById('az1').value=""; document.getElementById('az2').value="";
+  document.getElementById('in3').value="";
+  P3.rays=[];
+  drawDecl(); }
+
+function drawDecl(){
+  const s=document.getElementById('decl');
+  s.innerHTML =
+   `<line x1="55" y1="95" x2="55" y2="18" stroke="var(--ink)" stroke-width="1.5"/>
+    <polygon points="55,10 51,20 59,20" fill="var(--ink)"/>
+    <line x1="55" y1="95" x2="30" y2="22" stroke="var(--danger)" stroke-width="1.5"/>
+    <polygon points="27,14 27,26 36,20" fill="var(--danger)"/>
+    <path d="M 55 58 A 38 38 0 0 0 43 60" fill="none" stroke="var(--muted)" stroke-width="1"/>
+    <text x="62" y="16" font-size="11" fill="var(--ink)">도북</text>
+    <text x="6" y="16" font-size="11" fill="var(--danger)">자북</text>
+    <text x="66" y="62" font-size="10.5" fill="var(--muted)">도자각 ${fmtAz(M.gma)}</text>
+    <text x="6" y="107" font-size="9.5" fill="var(--muted)">(각도는 과장해 그렸음)</text>`; }
+
+/* ---------- 채점·피드백 ---------- */
+const fb=document.getElementById('feedback');
+function say(cls,msg){ fb.className=cls; fb.innerHTML=msg; }
+function tally(ok){ tries++; if(ok) hits++;
+  document.getElementById('score').textContent=`정답 ${hits} / 시도 ${tries}`; }
+function parse8(s){ s=s.replace(/\D/g,''); return s.length===8?s:null; }
+
+document.getElementById('ok1').onclick=()=>{
+  if(P1.done) return;
+  const s=parse8(document.getElementById('in1').value);
+  if(!s){ say('info','8자리 숫자로 입력하세요. 예: 52344781'); return; }
+  const ans=coordOf(P1.t.x,P1.t.y);
+  const dE=Math.abs(+s.slice(0,4)-+ans.slice(0,4)), dN=Math.abs(+s.slice(4)-+ans.slice(4));
+  const ok=dE<=3&&dN<=3; P1.done=true; tally(ok); draw();
+  say(ok?'ok':'bad', ok?`정답! 판독값 <b class="mono">${ans}</b> (±30m 인정)`
+    :`오답 — 정답은 <b class="mono">${ans}</b> (동서 ${dE*10}m, 남북 ${dN*10}m 차이)`); };
+
+cv.addEventListener('click',ev=>{
+  if(mode!==2||P2.done||!P2.code) return;
+  const r=cv.getBoundingClientRect();
+  const p={x:(ev.clientX-r.left)*cv.width/r.width, y:(ev.clientY-r.top)*cv.height/r.height};
+  P2.guess=p; P2.done=true;
+  const d=Math.hypot(p.x-P2.truth.x,p.y-P2.truth.y);
+  const ok=d<=25; tally(ok); draw();
+  say(ok?'ok':'bad', ok?`정답! 오차 약 ${Math.round(d/PXKM*1000)}m`
+    :`오답 — 실제 지점(초록 ○)에서 약 ${Math.round(d/PXKM*1000)}m 벗어났습니다.`); });
+
+function readAz(id){ const v=parseFloat(document.getElementById(id).value);
+  if(isNaN(v)) return null;
+  const d=unit()==='deg'?v:v*360/6400; return ((d%360)+360)%360; }
+function updateRays(){ if(!P3.lms) return;
+  const a1=readAz('az1'), a2=readAz('az2');
+  P3.rays=[];
+  if(a1!==null) P3.rays.push({from:P3.lms[0],az:a1});
+  if(a2!==null) P3.rays.push({from:P3.lms[1],az:a2});
+  draw(); }
+['az1','az2'].forEach(id=>document.getElementById(id).addEventListener('input',updateRays));
+document.getElementById('drawBtn').onclick=()=>{ updateRays();
+  if(P3.rays.length===0) say('info','역방위각을 입력하면 그 즉시 지도에 선이 그어집니다.');
+  else if(P3.rays.length===1) say('info','선 1개를 그었습니다. 나머지 역방위각도 입력하세요.');
+  else say('info','두 선을 그었습니다. 교차점(○)의 좌표를 판독해 입력하세요.'); };
+document.getElementById('clearBtn').onclick=()=>{ P3.rays=[];
+  document.getElementById('az1').value=""; document.getElementById('az2').value="";
+  draw(); fb.className=''; };
+document.getElementById('ok3').onclick=()=>{
+  if(P3.done) return;
+  const s=parse8(document.getElementById('in3').value);
+  if(!s){ say('info','8자리 숫자로 입력하세요.'); return; }
+  const pt=pointOf(s);
+  if(!pt){ say('info','이 지도 범위 밖의 좌표입니다. 격자 숫자를 다시 확인하세요.'); return; }
+  const d=Math.hypot(pt.x-P3.p.x,pt.y-P3.p.y);
+  const ok=d<=26; P3.done=true; tally(ok);
+  say(ok?'ok':'bad', ok?`정답! 현 위치 <b class="mono">${coordOf(P3.p.x,P3.p.y)}</b> (오차 약 ${Math.round(d/PXKM*1000)}m)`
+    :`오답 — 실제 위치는 <b class="mono">${coordOf(P3.p.x,P3.p.y)}</b>였습니다. "정답·풀이 보기"로 확인해 보세요.`); };
+document.getElementById('solBtn').onclick=()=>{
+  P3.reveal=true; draw();
+  const rows=P3.lms.map((lm,i)=>{
+    const g=P3.trueAz(lm), back=(g+180)%360;
+    return `${lm.name}: 자북 <span class="mono">${fmtAz(P3.obs[i])}</span> − 도자각 <span class="mono">${fmtAz(M.gma)}</span> = 도북 <span class="mono">${fmtAz(g)}</span> → 역방위각 <span class="mono">${fmtAz(back)}</span>`; });
+  say('info', rows.join('<br>')+`<br>교차점 좌표: <b class="mono">${coordOf(P3.p.x,P3.p.y)}</b>`); };
+document.querySelectorAll('input[name=unit]').forEach(r=>r.onchange=()=>{ renderObs(); });
+
+/* ---------- 판독판 ---------- */
+const sc=document.getElementById('scale');
+(function(){ // 좌표 판독판: 기준점(0)은 우상단 모서리, 좌로·아래로 0~1000m(10등분)
+  const S=156, D=10, U=S/D, C1="#B87A18", C2="#8A5E10";
+  let t=`<rect x="0" y="0" width="${S}" height="${S}" fill="rgba(255,196,66,.14)" stroke="${C1}" stroke-width="2"/>`;
+  t+=`<circle cx="${S}" cy="0" r="3.2" fill="#B23A2E"/>`;
+  t+=`<text x="${S-14}" y="13" font-size="8.5" font-weight="700" fill="#B23A2E">0</text>`;
+  for(let i=1;i<=D;i++){ const p=i*U;
+    const len=(i%5===0)?17:12;
+    // 상단 눈금(오른쪽→왼쪽으로 증가) · 우측 눈금(위→아래로 증가)
+    t+=`<line x1="${S-p}" y1="0" x2="${S-p}" y2="${len}" stroke="${C1}" stroke-width="${i%5?1:1.6}"/>`;
+    t+=`<line x1="${S}" y1="${p}" x2="${S-len}" y2="${p}" stroke="${C1}" stroke-width="${i%5?1:1.6}"/>`;
+    if(i<D){ t+=`<text x="${S-p-2.7}" y="26" font-size="8.5" font-weight="700" fill="${C2}">${i}</text>`;
+      t+=`<text x="${S-27}" y="${p+3}" font-size="8.5" font-weight="700" fill="${C2}">${i}</text>`; }
+    else{ t+=`<text x="1" y="26" font-size="7" font-weight="700" fill="${C2}">1000</text>`;
+      t+=`<text x="${S-31}" y="${S-4}" font-size="7" font-weight="700" fill="${C2}">1000</text>`; }
+    // 보조눈금(반 칸)
+    const h=p-U/2;
+    t+=`<line x1="${S-h}" y1="0" x2="${S-h}" y2="6" stroke="${C1}" stroke-width=".7"/>`;
+    t+=`<line x1="${S}" y1="${h}" x2="${S-6}" y2="${h}" stroke="${C1}" stroke-width=".7"/>`; }
+  t+=`<text x="${S/2}" y="${S/2+30}" text-anchor="middle" font-size="7.5" fill="${C2}">빨간 0 모서리를 지점 위에 놓고</text>`;
+  t+=`<text x="${S/2}" y="${S/2+41}" text-anchor="middle" font-size="7.5" fill="${C2}">왼쪽 격자선 눈금=동서 · 아래 격자선 눈금=남북</text>`;
+  t+=`<text x="${S/2-38}" y="${S+15}" font-size="9" font-weight="700" fill="${C2}">좌표 판독판 · 1km(1000m)</text>`;
+  document.getElementById('scaleSvg').innerHTML=t; })();
+
+(function(){ // 투명 각도기(도북 기준, 북=0°)
+  const C="#4A6E93";
+  let t=`<circle cx="100" cy="100" r="92" fill="rgba(90,130,180,.10)" stroke="${C}" stroke-width="1.6"/>`;
+  t+=`<line x1="100" y1="8" x2="100" y2="192" stroke="${C}" stroke-width=".5" opacity=".55" stroke-dasharray="3 3"/>`;
+  t+=`<line x1="8" y1="100" x2="192" y2="100" stroke="${C}" stroke-width=".5" opacity=".55" stroke-dasharray="3 3"/>`;
+  t+=`<circle cx="100" cy="100" r="2.2" fill="${C}"/>`;
+  for(let a=0;a<360;a+=2){
+    const s=Math.sin(a*Math.PI/180), c=Math.cos(a*Math.PI/180);
+    const r1=(a%10===0)?82:87;
+    t+=`<line x1="${(100+r1*s).toFixed(1)}" y1="${(100-r1*c).toFixed(1)}" x2="${(100+92*s).toFixed(1)}" y2="${(100-92*c).toFixed(1)}" stroke="${C}" stroke-width="${a%30===0?1.2:0.6}"/>`;
+    if(a%10===0) t+=`<text transform="rotate(${a} 100 100)" x="100" y="27" text-anchor="middle" font-size="${a%90===0?9:6.5}" font-weight="${a%90===0?700:400}" fill="${a===0?'#B23A2E':C}">${a}</text>`; }
+  t+=`<text x="100" y="4" text-anchor="middle" font-size="8" font-weight="700" fill="#B23A2E">북(도북)</text>`;
+  t+=`<text x="100" y="126" text-anchor="middle" font-size="8" fill="${C}">중심을 지점에 맞추고 읽기</text>`;
+  document.getElementById('protSvg').innerHTML=t; })();
+
+(function(){ // 축척자 1:25,000 (3km)
+  const C1="#B87A18", C2="#8A5E10", U=PXKM/10;
+  let t=`<rect x="0" y="14" width="468" height="26" fill="rgba(255,196,66,.14)" stroke="${C1}" stroke-width="1.6"/>`;
+  t+=`<circle cx="8" cy="27" r="2.6" fill="#B23A2E"/>`;
+  for(let i=0;i<=30;i++){ const x=i*U;
+    const km=(i%10===0), half=(i%5===0);
+    t+=`<line x1="${x}" y1="14" x2="${x}" y2="${14+(km?14:half?10:6)}" stroke="${C1}" stroke-width="${km?1.5:half?1:.7}"/>`;
+    if(half) t+=`<text x="${x}" y="11" text-anchor="middle" font-size="7.5" font-weight="${km?700:400}" fill="${C2}">${i===0?"0":(i/10)+"km"}</text>`; }
+  t+=`<text x="380" y="33" font-size="8" font-weight="700" fill="${C2}">축척 1:25,000</text>`;
+  document.getElementById('rulerSvg').innerHTML=t; })();
+
+// 공통 드래그 (축척자는 손잡이 회전 별도)
+function draggable(el){
+  let d=null;
+  el.addEventListener('pointerdown',e=>{
+    if(e.target.classList&&e.target.classList.contains('rh')) return;
+    el.setPointerCapture(e.pointerId); el.classList.add('grab');
+    d={dx:e.clientX-el.offsetLeft, dy:e.clientY-el.offsetTop}; });
+  el.addEventListener('pointermove',e=>{ if(!d) return;
+    const fr=document.getElementById('frame');
+    let x=e.clientX-d.dx, y=e.clientY-d.dy;
+    x=Math.max(-30,Math.min(fr.clientWidth-40,x));
+    y=Math.max(-30,Math.min(fr.clientHeight-30,y));
+    el.style.left=x+'px'; el.style.top=y+'px'; });
+  el.addEventListener('pointerup',()=>{ d=null; el.classList.remove('grab');
+    if(el.id!=='scale') return;
+    // 판독판: 격자 교차점 근처에서 놓으면 자동 정렬(스냅)
+    const fr=document.getElementById('frame'), g=fr.clientWidth/KM;
+    const x=el.offsetLeft, y=el.offsetTop;
+    const sx=Math.round(x/g)*g, sy=Math.round(y/g)*g;
+    if(Math.abs(sx-x)<15&&Math.abs(sy-y)<15&&sx>=0&&sy>=0
+       &&sx<=fr.clientWidth-el.clientWidth+1&&sy<=fr.clientHeight-el.clientHeight+1){
+      el.style.left=sx+'px'; el.style.top=sy+'px';
+      el.classList.add('snapped'); setTimeout(()=>el.classList.remove('snapped'),450); } });
+}
+draggable(sc);
+draggable(document.getElementById('prot'));
+const ruler=document.getElementById('ruler');
+draggable(ruler);
+// 축척자 회전 손잡이
+(function(){
+  const rh=ruler.querySelector('.rh'); let rot=false;
+  function pivot(){ const fr=document.getElementById('frame').getBoundingClientRect();
+    return {x:fr.left+ruler.offsetLeft+ruler.clientWidth*8/468,
+            y:fr.top+ruler.offsetTop+ruler.clientHeight/2}; }
+  rh.addEventListener('pointerdown',e=>{ e.stopPropagation();
+    rh.setPointerCapture(e.pointerId); rot=true; });
+  rh.addEventListener('pointermove',e=>{ if(!rot) return;
+    const p=pivot();
+    const a=Math.atan2(e.clientY-p.y, e.clientX-p.x)*180/Math.PI;
+    ruler.style.transform=`rotate(${a}deg)`;
+    const az=((a+90)%360+360)%360;
+    document.getElementById('azread').textContent="방위각 "+(Math.round(az*2)/2)+"°"; });
+  rh.addEventListener('pointerup',()=>{ rot=false; });
+})();
+// 각도기 회전 손잡이 (중심 기준, 더블클릭 시 원위치)
+(function(){
+  const prot=document.getElementById('prot');
+  const rh=prot.querySelector('.rh'); let rot=false;
+  function pivot(){ const fr=document.getElementById('frame').getBoundingClientRect();
+    return {x:fr.left+prot.offsetLeft+prot.clientWidth/2,
+            y:fr.top+prot.offsetTop+prot.clientHeight/2}; }
+  rh.addEventListener('pointerdown',e=>{ e.stopPropagation();
+    rh.setPointerCapture(e.pointerId); rot=true; });
+  rh.addEventListener('pointermove',e=>{ if(!rot) return;
+    const p=pivot();
+    const a=Math.atan2(e.clientY-p.y, e.clientX-p.x)*180/Math.PI;
+    prot.style.transform=`rotate(${a}deg)`;
+    const r=((a%360)+360)%360;
+    document.getElementById('protRead').textContent="회전 "+(Math.round(r*2)/2)+"°"; });
+  rh.addEventListener('pointerup',()=>{ rot=false; });
+  rh.addEventListener('dblclick',()=>{ prot.style.transform="";
+    document.getElementById('protRead').textContent="회전 0°"; });
+})();
+// 도구 토글
+[['tgScale','scale'],['tgProt','prot'],['tgRuler','ruler']].forEach(([b,t])=>{
+  const bt=document.getElementById(b), el=document.getElementById(t);
+  bt.onclick=()=>{ el.classList.toggle('on');
+    bt.classList.toggle('on', el.classList.contains('on')); }; });
+
+/* ---------- 모드·버튼 ---------- */
+function setMode(m){ mode=m; fb.className='';
+  [1,2,3].forEach(i=>{ document.getElementById('tab'+i).classList.toggle('on',i===m);
+    document.getElementById('m'+i).hidden=(i!==m); });
+  cv.style.cursor=(m===2)?'crosshair':'default';
+  newProblem(); }
+function newProblem(){ fb.className='';
+  if(mode===1) newQ1(); else if(mode===2) newQ2(); else newQ3();
+  draw(); }
+document.getElementById('tab1').onclick=()=>setMode(1);
+document.getElementById('tab2').onclick=()=>setMode(2);
+document.getElementById('tab3').onclick=()=>setMode(3);
+document.getElementById('newQ').onclick=newProblem;
+document.getElementById('newMap').onclick=()=>{ genMap((Math.random()*1e9)|0); newProblem(); };
+['in1','in3'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById(id==='in1'?'ok1':'ok3').click(); }));
+
+genMap((Math.random()*1e9)|0);
+setMode(1);
+</script>
+
+</body>
+</html>
