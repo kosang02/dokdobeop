@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>독도법 연습장</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
 <style>
 :root{
   --paper:#F7F4E9; --card:#FFFEF6; --ink:#26251C; --muted:#6E6A56; --line:#DFD9C2;
@@ -75,8 +76,8 @@ canvas{ display:block; width:100%; height:auto; }
 #prot .azread{ right:auto; left:50%; margin-left:-34px; }
 
 .panel{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:16px; }
-.tabs{ display:flex; gap:6px; margin-bottom:14px; }
-.tabs button{ flex:1; padding:8px 4px; font-size:13px; font-weight:600; color:var(--muted);
+.tabs{ display:flex; gap:5px; margin-bottom:14px; }
+.tabs button{ flex:1; padding:8px 2px; font-size:12.5px; font-weight:600; color:var(--muted);
   background:transparent; border:1px solid var(--line); border-radius:4px; cursor:pointer; }
 .tabs button.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
 .tabs button:focus-visible, button:focus-visible, input:focus-visible{
@@ -91,7 +92,7 @@ h2{ font-size:15px; margin:0 0 8px; }
 input[type=text],input[type=number]{ font-size:16px; padding:7px 9px; width:130px;
   border:1px solid var(--line); border-radius:4px; background:var(--paper); color:var(--ink);
   font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
-#az1,#az2{ width:190px; }
+#az1,#az2,#az1b,#az2b{ width:190px; }
 button.act{ padding:8px 14px; font-size:13.5px; font-weight:600; cursor:pointer;
   background:var(--accent); color:var(--accent-ink); border:none; border-radius:4px; }
 button.ghost{ padding:8px 12px; font-size:13px; cursor:pointer; background:transparent;
@@ -119,6 +120,12 @@ details .mono{ color:var(--ink); }
 .obs b{ font-weight:700; }
 #decl{ margin-top:8px; }
 hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
+#cmpWrap{ margin:10px 0 12px; }
+#cmpSvg{ display:block; width:100%; max-width:280px; margin:0 auto; touch-action:none;
+  cursor:crosshair; user-select:none; -webkit-user-select:none; }
+#cmpRead{ text-align:center; margin-top:6px; }
+.finebtns{ display:flex; justify-content:center; align-items:center; gap:8px; margin:6px 0 2px; }
+.finebtns button{ min-width:44px; }
 @media (prefers-reduced-motion: no-preference){
   .tabs button, button.act, button.ghost{ transition:background .15s, color .15s, border-color .15s; }
 }
@@ -168,8 +175,13 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
       <button id="tab1" class="on">좌표 판독</button>
       <button id="tab2">위치 찾기</button>
       <button id="tab3">후방교회법</button>
+      <button id="tab4">심화</button>
     </div>
     <div class="score" id="score">정답 0 / 시도 0</div>
+    <div class="units" id="unitRow" style="display:none">
+      단위: <label><input type="radio" name="unit" value="deg" checked> 도(°)</label>
+      <label><input type="radio" name="unit" value="mil"> 밀</label>
+    </div>
 
     <section id="m1">
       <h2>지도의 표적 → 8자리 좌표</h2>
@@ -193,10 +205,6 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
 
     <section id="m3" hidden>
       <h2>방위각으로 자기 위치 찾기</h2>
-      <div class="units">
-        단위: <label><input type="radio" name="unit" value="deg" checked> 도(°)</label>
-        <label><input type="radio" name="unit" value="mil"> 밀</label>
-      </div>
       <div class="q">현 위치를 모릅니다. 나침반으로 두 지형지물을 관측했습니다. <b>도자각을 적용해 도북 역방위각을 계산</b>하고 선을 그어 자기 위치의 8자리 좌표를 구하세요.</div>
       <div class="obs" id="obs"></div>
       <div class="row"><label id="lb1" for="az1"></label>
@@ -221,6 +229,41 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
         </ol></details>
     </section>
 
+    <section id="m4" hidden>
+      <h2>심화 — 직접 측정해 위치 찾기</h2>
+      <div class="q">지도에 <b>두 지형지물의 위치(①·②)만</b> 표시됩니다. 방위각은 주어지지 않습니다 — 아래 <b>나침반으로 직접 조준해 자북방위각을 측정</b>한 뒤, 도자각을 적용해 역방위각을 계산·작도하여 자기 위치의 <span class="big">8자리 좌표</span>를 구하세요.</div>
+      <div class="obs" id="obs4"></div>
+      <div id="cmpWrap">
+        <svg id="cmpSvg" viewBox="0 0 240 240" aria-label="가상 나침반 (드래그로 조준)"></svg>
+        <p style="font-size:12px;color:var(--muted);text-align:center;margin:6px 0 0;">조준선(주황)을 드래그해 ①·②에 맞추고 방위각을 읽으세요</p>
+        <div class="obs mono" id="cmpRead"></div>
+        <div class="finebtns">
+          <button class="ghost" id="aimM">−</button>
+          <span style="font-size:12px;color:var(--muted)">미세 조정</span>
+          <button class="ghost" id="aimP">＋</button>
+        </div>
+      </div>
+      <div class="row"><label id="lb1b" for="az1b"></label>
+        <input type="number" id="az1b" step="any" placeholder="도북 역방위각"></div>
+      <div class="row"><label id="lb2b" for="az2b"></label>
+        <input type="number" id="az2b" step="any" placeholder="도북 역방위각"></div>
+      <p style="font-size:12.5px;color:var(--muted);margin:4px 0 8px;">역방위각을 입력하면 <b>즉시 지도에 선이 그어집니다.</b></p>
+      <div class="btns"><button class="act" id="drawBtn4">선 다시 긋기</button>
+        <button class="ghost" id="clearBtn4">선 지우기</button></div>
+      <hr>
+      <div class="row"><label for="in4">내 위치 좌표</label>
+        <input type="text" id="in4" inputmode="numeric" maxlength="9" placeholder="8자리">
+        <button class="act" id="ok4">확인</button></div>
+      <div class="btns"><button class="ghost" id="solBtn4">정답·풀이 보기</button></div>
+      <details><summary>측정·계산 순서</summary>
+        <ol style="padding-left:18px; margin:6px 0;">
+          <li>나침반의 조준선을 <b>① 아이콘에 정확히</b> 맞추고 자북방위각을 읽는다</li>
+          <li><b>자북방위각 − 도자각(서편각)</b> = 도북방위각, <b>± 180°(3200밀)</b> = 역방위각</li>
+          <li>①에서 역방위각 방향으로 선을 긋는다 — ②도 같은 방법으로</li>
+          <li>두 선의 <b>교차점이 내 위치</b> — 좌표를 판독해 입력한다</li>
+        </ol></details>
+    </section>
+
     <div id="feedback" role="status" aria-live="polite"></div>
     <div class="btns"><button class="act" id="newQ">새 문제</button>
       <button class="ghost" id="newMap">새 지도 생성</button></div>
@@ -239,7 +282,8 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;
   return ((t^t>>>14)>>>0)/4294967296;}}
 let rng, M={}; // 지도 상태
 let mode=1, tries=0, hits=0;
-let P1={}, P2={}, P3={}; // 각 모드의 현재 문제
+let P1={}, P2={}, P3={}, P4={}; // 각 모드의 현재 문제
+const C4=['#B23A2E','#33698C']; // 심화 모드 지물 ①·② 색
 
 /* ---------- 지형·지도 생성 ---------- */
 function hAt(xk,yk){ let h=50;
@@ -385,6 +429,19 @@ function draw(){
       if(ip) ring(ip,"#B23A2E"); }
     if(P3.reveal){ for(const lm of P3.lms) ray(lm,(P3.trueAz(lm)+180)%360,"#3F7A46",true);
       mark(P3.p,"#3F7A46"); } }
+  if(mode===4&&P4.lms){
+    P4.lms.forEach((lm,i)=>{
+      ctx.save(); ctx.strokeStyle=C4[i]; ctx.lineWidth=2.2; ctx.setLineDash([6,4]);
+      ctx.beginPath(); ctx.arc(lm.x,lm.y,15,0,7); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.font="700 15px sans-serif"; ctx.lineJoin="round";
+      ctx.strokeStyle=cssVar('--paper'); ctx.lineWidth=3;
+      const s=i?'②':'①'; ctx.strokeText(s,lm.x+16,lm.y-13);
+      ctx.fillStyle=C4[i]; ctx.fillText(s,lm.x+16,lm.y-13); ctx.restore(); });
+    for(const r of P4.rays) ray(r.from,r.az,C4[r.i],false);
+    if(P4.rays.length===2){ const ip=inter(P4.rays[0],P4.rays[1]);
+      if(ip) ring(ip,"#C98A2B"); }
+    if(P4.reveal){ for(const lm of P4.lms) ray(lm,(azDeg(P4.p,lm)+180)%360,"#3F7A46",true);
+      mark(P4.p,"#3F7A46"); } }
 }
 function mark(p,c){ ctx.strokeStyle=c; ctx.lineWidth=2.5;
   ctx.beginPath(); ctx.moveTo(p.x-8,p.y-8); ctx.lineTo(p.x+8,p.y+8);
@@ -416,7 +473,7 @@ function newQ2(){ const t={x:rnd(30,SIZE-30),y:rnd(30,SIZE-30)};
   P2={code:coordOf(t.x,t.y),done:false,guess:null};
   P2.truth=pointOf(P2.code);
   document.getElementById('q2').textContent=P2.code; }
-function newQ3(){
+function pickResection(){ // 후방교회법용 (자기 위치, 지형지물 2개) 뽑기
   const cands=M.marks.filter(m=>m.type!=='lake');
   for(let t=0;t<500;t++){
     const p={x:rnd(0.8*PXKM,SIZE-0.8*PXKM), y:rnd(0.8*PXKM,SIZE-0.8*PXKM)};
@@ -426,9 +483,15 @@ function newQ3(){
     for(let u=0;u<ok.length;u++) for(let v=u+1;v<ok.length;v++){
       let sep=Math.abs(azDeg(p,ok[u])-azDeg(p,ok[v]));
       if(sep>180) sep=360-sep;
-      if(sep>28&&sep<152){
-        setQ3(p,[ok[u],ok[v]]); return; } } }
-  setQ3({x:SIZE/2,y:SIZE/2},[cands[0],cands[1]]); // 안전장치
+      if(sep>28&&sep<152) return {p,lms:[ok[u],ok[v]]}; } }
+  return {p:{x:SIZE/2,y:SIZE/2},lms:[cands[0],cands[1]]}; // 안전장치
+}
+function newQ3(){ const {p,lms}=pickResection(); setQ3(p,lms); }
+function newQ4(){
+  const {p,lms}=pickResection();
+  P4={p,lms,rays:[],reveal:false,done:false,aim:0};
+  P4.obs=lms.map(lm=>(azDeg(p,lm)+M.gma)%360); // 자북방위각(정밀값)
+  renderObs4(); buildCompass();
 }
 function setQ3(p,lms){
   P3={p, lms, rays:[], reveal:false, done:false};
@@ -524,7 +587,109 @@ document.getElementById('solBtn').onclick=()=>{
     const g=P3.trueAz(lm), back=(g+180)%360;
     return `${lm.name}: 자북 <span class="mono">${fmtAz(P3.obs[i])}</span> − 도자각 <span class="mono">${fmtAz(M.gma)}</span> = 도북 <span class="mono">${fmtAz(g)}</span> → 역방위각 <span class="mono">${fmtAz(back)}</span>`; });
   say('info', rows.join('<br>')+`<br>교차점 좌표: <b class="mono">${coordOf(P3.p.x,P3.p.y)}</b>`); };
-document.querySelectorAll('input[name=unit]').forEach(r=>r.onchange=()=>{ renderObs(); });
+document.querySelectorAll('input[name=unit]').forEach(r=>r.onchange=()=>{
+  if(P3.lms&&mode===3) renderObs();
+  if(P4.lms&&mode===4){ renderObs4(); buildCompass(); } });
+
+/* ---------- 심화 모드: 가상 나침반 ---------- */
+function renderObs4(){
+  const o=document.getElementById('obs4');
+  o.innerHTML = `도자각: <b>서편각 ${fmtAz(M.gma)}</b><br>`+
+    `표시 지물: <b style="color:${C4[0]}">① ${P4.lms[0].name}</b> · `+
+    `<b style="color:${C4[1]}">② ${P4.lms[1].name}</b> — 방위각은 직접 측정`;
+  document.getElementById('lb1b').textContent="① "+P4.lms[0].name+" 기준";
+  document.getElementById('lb2b').textContent="② "+P4.lms[1].name+" 기준";
+  document.getElementById('az1b').value=""; document.getElementById('az2b').value="";
+  document.getElementById('in4').value="";
+  P4.rays=[]; }
+
+function aimStep(){ return unit()==='deg' ? 0.5 : 10*360/6400; } // 0.5° 또는 10밀
+function buildCompass(){
+  if(!P4.lms) return;
+  const C="#4A6E93", cx=120, cy=120;
+  let t=`<circle cx="${cx}" cy="${cy}" r="110" fill="rgba(90,130,180,.08)" stroke="${C}" stroke-width="1.6"/>`;
+  t+=`<line x1="${cx}" y1="14" x2="${cx}" y2="226" stroke="${C}" stroke-width=".5" opacity=".4" stroke-dasharray="3 3"/>`;
+  t+=`<line x1="14" y1="${cy}" x2="226" y2="${cy}" stroke="${C}" stroke-width=".5" opacity=".4" stroke-dasharray="3 3"/>`;
+  if(unit()==='deg'){
+    for(let a=0;a<360;a+=2){
+      const s=Math.sin(a*Math.PI/180), c=Math.cos(a*Math.PI/180);
+      const r1=(a%10===0)?98:104;
+      t+=`<line x1="${(cx+r1*s).toFixed(1)}" y1="${(cy-r1*c).toFixed(1)}" x2="${(cx+110*s).toFixed(1)}" y2="${(cy-110*c).toFixed(1)}" stroke="${C}" stroke-width="${a%30===0?1.2:0.6}"/>`;
+      if(a%10===0) t+=`<text transform="rotate(${a} ${cx} ${cy})" x="${cx}" y="31" text-anchor="middle" font-size="${a%90===0?10:7}" font-weight="${a%90===0?700:400}" fill="${a===0?'#B23A2E':C}">${a}</text>`; }
+  }else{
+    for(let m=0;m<6400;m+=25){
+      const a=m*360/6400, s=Math.sin(a*Math.PI/180), c=Math.cos(a*Math.PI/180);
+      const r1=(m%100===0)?98:104;
+      t+=`<line x1="${(cx+r1*s).toFixed(1)}" y1="${(cy-r1*c).toFixed(1)}" x2="${(cx+110*s).toFixed(1)}" y2="${(cy-110*c).toFixed(1)}" stroke="${C}" stroke-width="${m%800===0?1.2:0.6}"/>`;
+      if(m%200===0) t+=`<text transform="rotate(${a} ${cx} ${cy})" x="${cx}" y="31" text-anchor="middle" font-size="${m%1600===0?9:6.5}" font-weight="${m%1600===0?700:400}" fill="${m===0?'#B23A2E':C}">${m/100}</text>`; }
+    t+=`<text x="${cx}" y="152" text-anchor="middle" font-size="7.5" fill="${C}">눈금 ×100밀</text>`; }
+  // 자북 바늘(다이얼은 자북 기준)
+  t+=`<polygon points="${cx},40 ${cx-4},54 ${cx+4},54" fill="#B23A2E"/>`;
+  t+=`<text x="${cx}" y="66" text-anchor="middle" font-size="8" font-weight="700" fill="#B23A2E">자북</text>`;
+  // 관측 대상 지물(내 위치에서 본 방향)
+  P4.lms.forEach((lm,i)=>{
+    const a=P4.obs[i]*Math.PI/180, r=80;
+    const x=cx+r*Math.sin(a), y=cy-r*Math.cos(a);
+    t+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.5" fill="${C4[i]}"/>`;
+    t+=`<text x="${x.toFixed(1)}" y="${(y+3.2).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">${i+1}</text>`; });
+  // 조준선(드래그로 회전)
+  t+=`<g id="sightG"><line x1="${cx}" y1="${cy}" x2="${cx}" y2="16" stroke="#C98A2B" stroke-width="2"/>
+      <polygon points="${cx},10 ${cx-5},22 ${cx+5},22" fill="#C98A2B"/>
+      <line x1="${cx}" y1="${cy}" x2="${cx}" y2="180" stroke="#C98A2B" stroke-width="1" stroke-dasharray="4 3" opacity=".45"/></g>`;
+  t+=`<circle cx="${cx}" cy="${cy}" r="2.6" fill="${C}"/>`;
+  document.getElementById('cmpSvg').innerHTML=t;
+  updateSight(); }
+function updateSight(){
+  const g=document.getElementById('sightG'); if(!g) return;
+  g.setAttribute('transform',`rotate(${P4.aim} 120 120)`);
+  document.getElementById('cmpRead').innerHTML=`조준 자북방위각 <b>${fmtAz(P4.aim)}</b>`; }
+(function(){
+  const cmp=document.getElementById('cmpSvg'); let aiming=false;
+  function aimFrom(e){ const r=cmp.getBoundingClientRect();
+    const mx=r.left+r.width/2, my=r.top+r.height/2;
+    let a=Math.atan2(e.clientX-mx, my-e.clientY)*180/Math.PI;
+    a=((a%360)+360)%360;
+    const st=aimStep(); P4.aim=(Math.round(a/st)*st)%360; updateSight(); }
+  cmp.addEventListener('pointerdown',e=>{ if(!P4.lms) return;
+    aiming=true; cmp.setPointerCapture(e.pointerId); aimFrom(e); });
+  cmp.addEventListener('pointermove',e=>{ if(aiming) aimFrom(e); });
+  cmp.addEventListener('pointerup',()=>{ aiming=false; });
+  const bump=d=>{ if(!P4.lms) return;
+    const st=aimStep(); P4.aim=((P4.aim+d*st)%360+360)%360; updateSight(); };
+  document.getElementById('aimM').onclick=()=>bump(-1);
+  document.getElementById('aimP').onclick=()=>bump(1);
+})();
+
+function updateRays4(){ if(!P4.lms) return;
+  const a1=readAz('az1b'), a2=readAz('az2b');
+  P4.rays=[];
+  if(a1!==null) P4.rays.push({from:P4.lms[0],az:a1,i:0});
+  if(a2!==null) P4.rays.push({from:P4.lms[1],az:a2,i:1});
+  draw(); }
+['az1b','az2b'].forEach(id=>document.getElementById(id).addEventListener('input',updateRays4));
+document.getElementById('drawBtn4').onclick=()=>{ updateRays4();
+  if(P4.rays.length===0) say('info','나침반으로 측정한 값에 도자각을 적용해 역방위각을 입력하세요.');
+  else if(P4.rays.length===1) say('info','선 1개를 그었습니다. 나머지 역방위각도 입력하세요.');
+  else say('info','두 선을 그었습니다. 교차점(○)의 좌표를 판독해 입력하세요.'); };
+document.getElementById('clearBtn4').onclick=()=>{ P4.rays=[];
+  document.getElementById('az1b').value=""; document.getElementById('az2b').value="";
+  draw(); fb.className=''; };
+document.getElementById('ok4').onclick=()=>{
+  if(P4.done) return;
+  const s=parse8(document.getElementById('in4').value);
+  if(!s){ say('info','8자리 숫자로 입력하세요.'); return; }
+  const pt=pointOf(s);
+  if(!pt){ say('info','이 지도 범위 밖의 좌표입니다. 격자 숫자를 다시 확인하세요.'); return; }
+  const d=Math.hypot(pt.x-P4.p.x,pt.y-P4.p.y);
+  const ok=d<=32; P4.done=true; tally(ok); // 직접 측정 오차를 감안해 ±약 200m 인정
+  say(ok?'ok':'bad', ok?`정답! 현 위치 <b class="mono">${coordOf(P4.p.x,P4.p.y)}</b> (오차 약 ${Math.round(d/PXKM*1000)}m)`
+    :`오답 — 실제 위치는 <b class="mono">${coordOf(P4.p.x,P4.p.y)}</b>였습니다. "정답·풀이 보기"로 확인해 보세요.`); };
+document.getElementById('solBtn4').onclick=()=>{
+  P4.reveal=true; draw();
+  const rows=P4.lms.map((lm,i)=>{
+    const g=azDeg(P4.p,lm), back=(g+180)%360;
+    return `${i?'②':'①'} ${lm.name}: 측정 자북 <span class="mono">${fmtAz(P4.obs[i])}</span> − 도자각 <span class="mono">${fmtAz(M.gma)}</span> = 도북 <span class="mono">${fmtAz(g)}</span> → 역방위각 <span class="mono">${fmtAz(back)}</span>`; });
+  say('info', rows.join('<br>')+`<br>교차점 좌표: <b class="mono">${coordOf(P4.p.x,P4.p.y)}</b>`); };
 
 /* ---------- 판독판 ---------- */
 const sc=document.getElementById('scale');
@@ -648,20 +813,24 @@ draggable(ruler);
 
 /* ---------- 모드·버튼 ---------- */
 function setMode(m){ mode=m; fb.className='';
-  [1,2,3].forEach(i=>{ document.getElementById('tab'+i).classList.toggle('on',i===m);
+  [1,2,3,4].forEach(i=>{ document.getElementById('tab'+i).classList.toggle('on',i===m);
     document.getElementById('m'+i).hidden=(i!==m); });
+  document.getElementById('unitRow').style.display=(m===3||m===4)?'flex':'none';
   cv.style.cursor=(m===2)?'crosshair':'default';
   newProblem(); }
 function newProblem(){ fb.className='';
-  if(mode===1) newQ1(); else if(mode===2) newQ2(); else newQ3();
+  if(mode===1) newQ1(); else if(mode===2) newQ2();
+  else if(mode===3) newQ3(); else newQ4();
   draw(); }
 document.getElementById('tab1').onclick=()=>setMode(1);
 document.getElementById('tab2').onclick=()=>setMode(2);
 document.getElementById('tab3').onclick=()=>setMode(3);
+document.getElementById('tab4').onclick=()=>setMode(4);
 document.getElementById('newQ').onclick=newProblem;
 document.getElementById('newMap').onclick=()=>{ genMap((Math.random()*1e9)|0); newProblem(); };
-['in1','in3'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
-  if(e.key==='Enter') document.getElementById(id==='in1'?'ok1':'ok3').click(); }));
+const okOf={in1:'ok1',in3:'ok3',in4:'ok4'};
+Object.keys(okOf).forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById(okOf[id]).click(); }));
 
 genMap((Math.random()*1e9)|0);
 setMode(1);
