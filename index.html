@@ -91,6 +91,7 @@ h2{ font-size:15px; margin:0 0 8px; }
 input[type=text],input[type=number]{ font-size:16px; padding:7px 9px; width:130px;
   border:1px solid var(--line); border-radius:4px; background:var(--paper); color:var(--ink);
   font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+#az1,#az2{ width:190px; }
 button.act{ padding:8px 14px; font-size:13.5px; font-weight:600; cursor:pointer;
   background:var(--accent); color:var(--accent-ink); border:none; border-radius:4px; }
 button.ghost{ padding:8px 12px; font-size:13px; cursor:pointer; background:transparent;
@@ -187,7 +188,7 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
       <h2>8자리 좌표 → 지도에서 클릭</h2>
       <div class="q">좌표 <span class="big mono" id="q2"></span> 지점을 지도에서 <b>클릭</b>하세요.</div>
       <details><summary>요령</summary>
-        <p>앞 2자리씩으로 1km 격자를 찾고, 셋째 자리(100m)·넷째 자리(10m)로 격자 안 위치를 짚습니다. 오차 약 150m까지 정답으로 인정합니다.</p></details>
+        <p>앞 2자리씩으로 1km 격자를 찾고, 셋째 자리(100m)·넷째 자리(10m)로 격자 안 위치를 짚습니다. 오차 약 160m까지 정답으로 인정합니다.</p></details>
     </section>
 
     <section id="m3" hidden>
@@ -288,6 +289,7 @@ function genMap(seed){
       if(M.marks.every(m=>Math.hypot(m.x-x,m.y-y)>0.75*PXKM)){
         M.marks.push({x,y,type:spec.type,name:spec.name}); break; } } }
 
+  M.F=F; M.N=N; M.cell=cell;
   renderBase(F,N,cell);
   document.getElementById('mapmeta').innerHTML =
     `<span>축척 <b>1:25,000</b></span><span>등고선 간격 <b>20m</b></span>`+
@@ -295,9 +297,12 @@ function genMap(seed){
     `<span>도엽 <b>${M.sheet}</b></span>`;
 }
 
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
 function renderBase(F,N,cell){
   const g=bctx;
-  g.fillStyle="#F7F4E9"; g.fillRect(0,0,SIZE,SIZE);
+  const paper=cssVar('--paper'), ink=cssVar('--ink'), muted=cssVar('--muted'), brown=cssVar('--brown');
+  g.fillStyle=paper; g.fillRect(0,0,SIZE,SIZE);
   // 등고선
   const t=(v1,v2,L)=>Math.min(1,Math.max(0,(L-v1)/(v2-v1)));
   for(let L=40;L<=400;L+=20){
@@ -319,40 +324,40 @@ function renderBase(F,N,cell){
         case 6: case 9: seg(T,B); break;
         case 7: case 8: seg(T,Lf); break;
         case 10: seg(T,R); seg(Lf,B); break; } }
-    g.strokeStyle="#A0653B"; g.globalAlpha=(L%100===0)?0.95:0.55;
+    g.strokeStyle=brown; g.globalAlpha=(L%100===0)?0.95:0.55;
     g.lineWidth=(L%100===0)?1.5:0.7; g.stroke(); }
   g.globalAlpha=1;
 
   // 격자와 숫자
-  g.strokeStyle="#4A5A63"; g.lineWidth=0.9;
-  g.font="700 13px ui-monospace,Menlo,monospace"; g.fillStyle="#33414A";
+  g.strokeStyle=muted; g.lineWidth=0.9;
+  g.font="700 13px ui-monospace,Menlo,monospace";
   for(let i=0;i<=KM;i++){ const p=i*PXKM;
     g.beginPath(); g.moveTo(p,0); g.lineTo(p,SIZE); g.stroke();
     g.beginPath(); g.moveTo(0,SIZE-p); g.lineTo(SIZE,SIZE-p); g.stroke(); }
   for(let i=0;i<KM;i++){
-    halo(g, String(M.e0+i).padStart(2,'0'), i*PXKM+3, SIZE-6);
-    halo(g, String(M.n0+i).padStart(2,'0'), 4, i===0?SIZE-24:SIZE-i*PXKM-5); }
+    halo(g, String(M.e0+i).padStart(2,'0'), i*PXKM+3, SIZE-6, ink, paper);
+    halo(g, String(M.n0+i).padStart(2,'0'), 4, i===0?SIZE-24:SIZE-i*PXKM-5, ink, paper); }
 
   // 지형지물
   for(const m of M.marks){
-    if(m.type==='peak'){ g.fillStyle="#26251C";
-      tri(g,m.x,m.y,7); halo(g,"▲"+m.h, m.x+8, m.y+4, "#26251C"); }
+    if(m.type==='peak'){ g.fillStyle=ink;
+      tri(g,m.x,m.y,7); halo(g,"▲"+m.h, m.x+8, m.y+4, ink, paper); }
     else if(m.type==='lake'){ g.fillStyle="rgba(51,105,140,.45)";
       g.strokeStyle="#33698C"; g.lineWidth=1.4;
       g.beginPath(); g.ellipse(m.x,m.y,44,26,0.4,0,7); g.fill(); g.stroke();
-      halo(g,m.name, m.x-14, m.y+4, "#33698C"); }
-    else if(m.type==='tower'){ g.strokeStyle="#26251C"; g.lineWidth=1.6;
+      halo(g,m.name, m.x-14, m.y+4, "#33698C", paper); }
+    else if(m.type==='tower'){ g.strokeStyle=ink; g.lineWidth=1.6;
       g.beginPath(); g.moveTo(m.x-5,m.y+6); g.lineTo(m.x,m.y-8); g.lineTo(m.x+5,m.y+6); g.stroke();
-      g.fillStyle="#26251C"; g.beginPath(); g.arc(m.x,m.y-8,2.6,0,7); g.fill();
-      halo(g,m.name, m.x+8, m.y+4, "#26251C"); }
-    else{ g.fillStyle="#26251C"; g.fillRect(m.x-5,m.y-5,10,10);
-      halo(g,m.name, m.x+8, m.y+4, "#26251C"); } }
+      g.fillStyle=ink; g.beginPath(); g.arc(m.x,m.y-8,2.6,0,7); g.fill();
+      halo(g,m.name, m.x+8, m.y+4, ink, paper); }
+    else{ g.fillStyle=ink; g.fillRect(m.x-5,m.y-5,10,10);
+      halo(g,m.name, m.x+8, m.y+4, ink, paper); } }
 }
 function tri(g,x,y,r){ g.beginPath(); g.moveTo(x,y-r); g.lineTo(x-r*0.9,y+r*0.7);
   g.lineTo(x+r*0.9,y+r*0.7); g.closePath(); g.fill(); }
-function halo(g,txt,x,y,color){ g.save(); g.font="700 12px 'Apple SD Gothic Neo','Malgun Gothic',sans-serif";
-  g.strokeStyle="#F7F4E9"; g.lineWidth=3; g.lineJoin="round"; g.strokeText(txt,x,y);
-  g.fillStyle=color||"#33414A"; g.fillText(txt,x,y); g.restore(); }
+function halo(g,txt,x,y,color,bg){ g.save(); g.font="700 12px 'Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+  g.strokeStyle=bg||cssVar('--paper'); g.lineWidth=3; g.lineJoin="round"; g.strokeText(txt,x,y);
+  g.fillStyle=color||cssVar('--ink'); g.fillText(txt,x,y); g.restore(); }
 
 /* ---------- 좌표 변환 ---------- */
 const CM=PXKM/100; // 10m가 화면에서 차지하는 픽셀
@@ -660,6 +665,10 @@ document.getElementById('newMap').onclick=()=>{ genMap((Math.random()*1e9)|0); n
 
 genMap((Math.random()*1e9)|0);
 setMode(1);
+
+// 시스템 다크모드 전환 시 캔버스 지도도 다시 그리기
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+  if(M.F){ renderBase(M.F,M.N,M.cell); draw(); } });
 </script>
 
 </body>
