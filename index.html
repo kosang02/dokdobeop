@@ -49,7 +49,6 @@ canvas{ display:block; width:100%; height:auto; }
 #scale.on{ display:block; }
 #scale svg{ display:block; width:100%; height:100%; overflow:visible; }
 #scale.grab{ cursor:grabbing; }
-#scale.snapped{ filter:drop-shadow(0 0 7px rgba(184,122,24,.95)); }
 
 .tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:2px 2px 8px; }
 .tools span{ font-size:12.5px; color:var(--muted); }
@@ -788,16 +787,7 @@ function draggable(el){
     x=Math.max(-30,Math.min(fr.clientWidth-40,x));
     y=Math.max(-30,Math.min(fr.clientHeight-30,y));
     el.style.left=x+'px'; el.style.top=y+'px'; });
-  el.addEventListener('pointerup',()=>{ d=null; el.classList.remove('grab');
-    if(el.id!=='scale') return;
-    // 판독판: 격자 교차점 근처에서 놓으면 자동 정렬(스냅)
-    const fr=document.getElementById('frame'), g=fr.clientWidth/KM;
-    const x=el.offsetLeft, y=el.offsetTop;
-    const sx=Math.round(x/g)*g, sy=Math.round(y/g)*g;
-    if(Math.abs(sx-x)<15&&Math.abs(sy-y)<15&&sx>=0&&sy>=0
-       &&sx<=fr.clientWidth-el.clientWidth+1&&sy<=fr.clientHeight-el.clientHeight+1){
-      el.style.left=sx+'px'; el.style.top=sy+'px';
-      el.classList.add('snapped'); setTimeout(()=>el.classList.remove('snapped'),450); } });
+  el.addEventListener('pointerup',()=>{ d=null; el.classList.remove('grab'); });
 }
 draggable(sc);
 draggable(document.getElementById('prot'));
