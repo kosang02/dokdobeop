@@ -56,24 +56,6 @@ canvas{ display:block; width:100%; height:auto; }
   background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:4px; }
 .tools button.on{ background:var(--amber); color:#fff; border-color:var(--amber); }
 
-#prot{ position:absolute; left:28%; top:24%; width:40%; aspect-ratio:1/1;
-  display:none; cursor:grab; touch-action:none; }
-#prot.on{ display:block; }
-#ruler{ position:absolute; left:14%; top:56%; width:60%; aspect-ratio:468/46;
-  display:none; cursor:grab; touch-action:none; transform-origin:1.7% 50%; }
-#ruler.on{ display:block; }
-#prot.grab, #ruler.grab{ cursor:grabbing; }
-#prot svg, #ruler svg, #scale svg{ overflow:visible; }
-#ruler .rh, #prot .rh{ position:absolute; right:-15px; top:50%; transform:translateY(-50%);
-  width:24px; height:24px; border-radius:50%; background:var(--amber); color:#fff;
-  font-size:13px; line-height:24px; text-align:center; cursor:crosshair;
-  touch-action:none; user-select:none; }
-#prot .rh{ background:#4A6E93; }
-#ruler .azread, #prot .azread{ position:absolute; right:14px; top:-24px; font-size:11px;
-  background:var(--card); border:1px solid var(--line); border-radius:3px;
-  padding:1px 6px; color:var(--ink); white-space:nowrap; }
-#prot .azread{ right:auto; left:50%; margin-left:-34px; }
-
 .panel{ background:var(--card); border:1px solid var(--line); border-radius:2px; padding:16px; }
 .tabs{ display:flex; gap:5px; margin-bottom:14px; }
 .tabs button{ flex:1; padding:8px 2px; font-size:12.5px; font-weight:600; color:var(--muted);
@@ -142,24 +124,12 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
   <div>
     <div class="mapmeta mono" id="mapmeta"></div>
     <div class="tools"><span>도구:</span>
-      <button id="tgScale">좌표판독판</button>
-      <button id="tgProt">각도기</button>
-      <button id="tgRuler">축척자</button>
+      <button id="tgScale">1:25 좌표판독판</button>
     </div>
     <div class="mapframe" id="frame">
       <canvas id="map" width="780" height="780"></canvas>
       <div id="scale" aria-label="좌표 판독판 (드래그로 이동)">
         <svg viewBox="0 0 156 156" id="scaleSvg"></svg>
-      </div>
-      <div id="prot" aria-label="투명 각도기 (드래그로 이동, 손잡이로 회전)">
-        <svg viewBox="0 0 200 200" id="protSvg"></svg>
-        <div class="azread mono" id="protRead">회전 0°</div>
-        <div class="rh" title="돌려서 회전 · 더블클릭하면 원위치">↻</div>
-      </div>
-      <div id="ruler" aria-label="축척자 (드래그로 이동, 손잡이로 회전)">
-        <svg viewBox="0 0 468 46" id="rulerSvg"></svg>
-        <div class="azread mono" id="azread">90°</div>
-        <div class="rh" title="돌려서 회전">↻</div>
       </div>
     </div>
     <div class="legend">
@@ -725,56 +695,37 @@ document.getElementById('solBtn4').onclick=()=>{
 
 /* ---------- 판독판 ---------- */
 const sc=document.getElementById('scale');
-(function(){ // 좌표 판독판: 기준점(0)은 우상단 모서리, 좌로·아래로 0~1000m(10등분)
-  const S=156, D=10, U=S/D, C1="#B87A18", C2="#8A5E10";
-  let t=`<rect x="0" y="0" width="${S}" height="${S}" fill="rgba(255,196,66,.14)" stroke="${C1}" stroke-width="2"/>`;
-  t+=`<circle cx="${S}" cy="0" r="3.2" fill="#B23A2E"/>`;
-  t+=`<text x="${S-14}" y="13" font-size="8.5" font-weight="700" fill="#B23A2E">0</text>`;
-  for(let i=1;i<=D;i++){ const p=i*U;
-    const len=(i%5===0)?17:12;
-    // 상단 눈금(오른쪽→왼쪽으로 증가) · 우측 눈금(위→아래로 증가)
-    t+=`<line x1="${S-p}" y1="0" x2="${S-p}" y2="${len}" stroke="${C1}" stroke-width="${i%5?1:1.6}"/>`;
-    t+=`<line x1="${S}" y1="${p}" x2="${S-len}" y2="${p}" stroke="${C1}" stroke-width="${i%5?1:1.6}"/>`;
-    if(i<D){ t+=`<text x="${S-p-2.7}" y="26" font-size="8.5" font-weight="700" fill="${C2}">${i}</text>`;
-      t+=`<text x="${S-27}" y="${p+3}" font-size="8.5" font-weight="700" fill="${C2}">${i}</text>`; }
-    else{ t+=`<text x="1" y="26" font-size="7" font-weight="700" fill="${C2}">1000</text>`;
-      t+=`<text x="${S-31}" y="${S-4}" font-size="7" font-weight="700" fill="${C2}">1000</text>`; }
-    // 보조눈금(반 칸)
-    const h=p-U/2;
-    t+=`<line x1="${S-h}" y1="0" x2="${S-h}" y2="6" stroke="${C1}" stroke-width=".7"/>`;
-    t+=`<line x1="${S}" y1="${h}" x2="${S-6}" y2="${h}" stroke="${C1}" stroke-width=".7"/>`; }
-  t+=`<text x="${S/2}" y="${S/2+30}" text-anchor="middle" font-size="7.5" fill="${C2}">빨간 0 모서리를 지점 위에 놓고</text>`;
-  t+=`<text x="${S/2}" y="${S/2+41}" text-anchor="middle" font-size="7.5" fill="${C2}">왼쪽 격자선 눈금=동서 · 아래 격자선 눈금=남북</text>`;
-  t+=`<text x="${S/2-38}" y="${S+15}" font-size="9" font-weight="700" fill="${C2}">좌표 판독판 · 1km(1000m)</text>`;
+(function(){ // 실물 1:25 격자: 우상단 0, 좌·하 방향으로 0~1000m
+  const S=156, HUNDRED=S/10, TWENTY=S/50;
+  const ink="var(--ink)", accent="#B23A2E";
+  let t=`<rect x="0" y="0" width="${S}" height="${S}" fill="rgba(255,255,255,.045)" stroke="${ink}" stroke-width="1.5"/>`;
+
+  // 상단·우측 20m 보조눈금. 100m마다 길고 굵게 표시한다.
+  for(let i=1;i<50;i++){
+    const p=i*TWENTY, major=i%5===0, half=i%5===2||i%5===3;
+    const len=major?7:half?4.5:3;
+    t+=`<line x1="${S-p}" y1="0" x2="${S-p}" y2="${len}" stroke="${ink}" stroke-width="${major?1.05:.55}"/>`;
+    t+=`<line x1="${S}" y1="${p}" x2="${S-len}" y2="${p}" stroke="${ink}" stroke-width="${major?1.05:.55}"/>`; }
+
+  // 실물 판독판처럼 100m 교점은 내부 십자표로 표시한다.
+  for(let row=1;row<10;row++) for(let col=1;col<10;col++){
+    const x=col*HUNDRED, y=row*HUNDRED, arm=1.65;
+    t+=`<path d="M${x-arm} ${y}H${x+arm}M${x} ${y-arm}V${y+arm}" stroke="${ink}" stroke-width=".75"/>`; }
+
+  // 위쪽은 오른쪽에서 왼쪽으로, 오른쪽은 위에서 아래로 증가한다.
+  for(let i=1;i<10;i++){
+    const x=S-i*HUNDRED, y=i*HUNDRED;
+    t+=`<text x="${x}" y="13" text-anchor="middle" font-size="7.2" fill="${ink}">${i}</text>`;
+    t+=`<text x="${S-9}" y="${y+2.5}" text-anchor="middle" font-size="7.2" fill="${ink}">${i}</text>`; }
+  t+=`<text x="3" y="13" font-size="6.6" fill="${ink}">1000</text>`;
+  t+=`<text x="${S-22}" y="${S-3}" font-size="6.6" fill="${ink}">1000</text>`;
+
+  // 판독 기준점. 이 모서리를 표적에 놓는다.
+  t+=`<path d="M${S-10} 0H${S}V10" fill="none" stroke="${accent}" stroke-width="2"/>`;
+  t+=`<text x="${S-3}" y="${S-5}" text-anchor="end" font-size="9" font-weight="700" fill="${ink}">1:25</text>`;
   document.getElementById('scaleSvg').innerHTML=t; })();
 
-(function(){ // 투명 각도기(도북 기준, 북=0°)
-  const C="#4A6E93";
-  let t=`<circle cx="100" cy="100" r="92" fill="rgba(90,130,180,.10)" stroke="${C}" stroke-width="1.6"/>`;
-  t+=`<line x1="100" y1="8" x2="100" y2="192" stroke="${C}" stroke-width=".5" opacity=".55" stroke-dasharray="3 3"/>`;
-  t+=`<line x1="8" y1="100" x2="192" y2="100" stroke="${C}" stroke-width=".5" opacity=".55" stroke-dasharray="3 3"/>`;
-  t+=`<circle cx="100" cy="100" r="2.2" fill="${C}"/>`;
-  for(let a=0;a<360;a+=2){
-    const s=Math.sin(a*Math.PI/180), c=Math.cos(a*Math.PI/180);
-    const r1=(a%10===0)?82:87;
-    t+=`<line x1="${(100+r1*s).toFixed(1)}" y1="${(100-r1*c).toFixed(1)}" x2="${(100+92*s).toFixed(1)}" y2="${(100-92*c).toFixed(1)}" stroke="${C}" stroke-width="${a%30===0?1.2:0.6}"/>`;
-    if(a%10===0) t+=`<text transform="rotate(${a} 100 100)" x="100" y="27" text-anchor="middle" font-size="${a%90===0?9:6.5}" font-weight="${a%90===0?700:400}" fill="${a===0?'#B23A2E':C}">${a}</text>`; }
-  t+=`<text x="100" y="4" text-anchor="middle" font-size="8" font-weight="700" fill="#B23A2E">북(도북)</text>`;
-  t+=`<text x="100" y="126" text-anchor="middle" font-size="8" fill="${C}">중심을 지점에 맞추고 읽기</text>`;
-  document.getElementById('protSvg').innerHTML=t; })();
-
-(function(){ // 축척자 1:25,000 (3km)
-  const C1="#B87A18", C2="#8A5E10", U=PXKM/10;
-  let t=`<rect x="0" y="14" width="468" height="26" fill="rgba(255,196,66,.14)" stroke="${C1}" stroke-width="1.6"/>`;
-  t+=`<circle cx="8" cy="27" r="2.6" fill="#B23A2E"/>`;
-  for(let i=0;i<=30;i++){ const x=i*U;
-    const km=(i%10===0), half=(i%5===0);
-    t+=`<line x1="${x}" y1="14" x2="${x}" y2="${14+(km?14:half?10:6)}" stroke="${C1}" stroke-width="${km?1.5:half?1:.7}"/>`;
-    if(half) t+=`<text x="${x}" y="11" text-anchor="middle" font-size="7.5" font-weight="${km?700:400}" fill="${C2}">${i===0?"0":(i/10)+"km"}</text>`; }
-  t+=`<text x="380" y="33" font-size="8" font-weight="700" fill="${C2}">축척 1:25,000</text>`;
-  document.getElementById('rulerSvg').innerHTML=t; })();
-
-// 공통 드래그 (축척자는 손잡이 회전 별도)
+// 자유 드래그 — 세부 좌표 판독을 방해하는 스냅은 적용하지 않는다.
 function draggable(el){
   let d=null;
   el.addEventListener('pointerdown',e=>{
@@ -790,49 +741,9 @@ function draggable(el){
   el.addEventListener('pointerup',()=>{ d=null; el.classList.remove('grab'); });
 }
 draggable(sc);
-draggable(document.getElementById('prot'));
-const ruler=document.getElementById('ruler');
-draggable(ruler);
-// 축척자 회전 손잡이
-(function(){
-  const rh=ruler.querySelector('.rh'); let rot=false;
-  function pivot(){ const fr=document.getElementById('frame').getBoundingClientRect();
-    return {x:fr.left+ruler.offsetLeft+ruler.clientWidth*8/468,
-            y:fr.top+ruler.offsetTop+ruler.clientHeight/2}; }
-  rh.addEventListener('pointerdown',e=>{ e.stopPropagation();
-    rh.setPointerCapture(e.pointerId); rot=true; });
-  rh.addEventListener('pointermove',e=>{ if(!rot) return;
-    const p=pivot();
-    const a=Math.atan2(e.clientY-p.y, e.clientX-p.x)*180/Math.PI;
-    ruler.style.transform=`rotate(${a}deg)`;
-    const az=((a+90)%360+360)%360;
-    document.getElementById('azread').textContent="방위각 "+(Math.round(az*2)/2)+"°"; });
-  rh.addEventListener('pointerup',()=>{ rot=false; });
-})();
-// 각도기 회전 손잡이 (중심 기준, 더블클릭 시 원위치)
-(function(){
-  const prot=document.getElementById('prot');
-  const rh=prot.querySelector('.rh'); let rot=false;
-  function pivot(){ const fr=document.getElementById('frame').getBoundingClientRect();
-    return {x:fr.left+prot.offsetLeft+prot.clientWidth/2,
-            y:fr.top+prot.offsetTop+prot.clientHeight/2}; }
-  rh.addEventListener('pointerdown',e=>{ e.stopPropagation();
-    rh.setPointerCapture(e.pointerId); rot=true; });
-  rh.addEventListener('pointermove',e=>{ if(!rot) return;
-    const p=pivot();
-    const a=Math.atan2(e.clientY-p.y, e.clientX-p.x)*180/Math.PI;
-    prot.style.transform=`rotate(${a}deg)`;
-    const r=((a%360)+360)%360;
-    document.getElementById('protRead').textContent="회전 "+(Math.round(r*2)/2)+"°"; });
-  rh.addEventListener('pointerup',()=>{ rot=false; });
-  rh.addEventListener('dblclick',()=>{ prot.style.transform="";
-    document.getElementById('protRead').textContent="회전 0°"; });
-})();
-// 도구 토글
-[['tgScale','scale'],['tgProt','prot'],['tgRuler','ruler']].forEach(([b,t])=>{
-  const bt=document.getElementById(b), el=document.getElementById(t);
-  bt.onclick=()=>{ el.classList.toggle('on');
-    bt.classList.toggle('on', el.classList.contains('on')); }; });
+const scaleToggle=document.getElementById('tgScale');
+scaleToggle.onclick=()=>{ sc.classList.toggle('on');
+  scaleToggle.classList.toggle('on',sc.classList.contains('on')); };
 
 /* ---------- 모드·버튼 ---------- */
 function setMode(m){ mode=m; fb.className='';
