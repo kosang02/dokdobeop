@@ -5,6 +5,7 @@ const { webcrypto } = require('node:crypto');
 
 const html = fs.readFileSync(new URL('../index.html', `file://${__filename}`), 'utf8');
 assert.doesNotMatch(html, /snapped|자동 정렬\(스냅\)/, 'coordinate reader must remain free-moving');
+assert.doesNotMatch(html, /id="(?:prot|ruler|tgProt|tgRuler)"/, 'unused protractor and ruler must stay removed');
 const match = html.match(/<script>([\s\S]*)<\/script>/);
 assert.ok(match, 'inline application script must exist');
 
@@ -75,6 +76,7 @@ const sandbox = {
 sandbox.globalThis=sandbox;
 vm.createContext(sandbox);
 vm.runInContext(match[1], sandbox, {filename:'index.html'});
+assert.match(get('scaleSvg').innerHTML, />1:25<\/text>/, '1:25 coordinate grid must be rendered');
 
 const evaluate = code => vm.runInContext(code, sandbox);
 assert.equal(evaluate('Math.round(azDeg({x:10,y:10},{x:10,y:0}))'), 0);
