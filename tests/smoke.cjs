@@ -4,6 +4,7 @@ const vm = require('node:vm');
 const { webcrypto } = require('node:crypto');
 
 const html = fs.readFileSync(new URL('../index.html', `file://${__filename}`), 'utf8');
+assert.doesNotMatch(html, /snapped|자동 정렬\(스냅\)/, 'coordinate reader must remain free-moving');
 const match = html.match(/<script>([\s\S]*)<\/script>/);
 assert.ok(match, 'inline application script must exist');
 
