@@ -43,7 +43,7 @@ h1{ margin:3px 0 2px; font-size:27px; letter-spacing:-.025em; text-wrap:balance;
 /* padding 비율로 정사각형을 확보해 aspect-ratio 미지원 모바일에서도 높이가 0이 되지 않는다. */
 .mapviewport{ position:relative; width:100%; overflow:auto; overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch; border:1.5px solid var(--ink); background:var(--paper);
-  box-shadow:0 1px 3px rgba(0,0,0,.12); scrollbar-gutter:stable; }
+  box-shadow:0 1px 3px rgba(0,0,0,.12); }
 .mapviewport::before{ content:""; display:block; padding-top:100%; }
 .mapframe{ position:absolute; top:0; right:0; bottom:0; left:0; width:auto; height:auto; background:var(--paper); }
 canvas{ position:absolute; top:0; right:0; bottom:0; left:0; display:block; width:100%; height:100%; }
