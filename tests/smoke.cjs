@@ -6,6 +6,12 @@ const { webcrypto } = require('node:crypto');
 const html = fs.readFileSync(new URL('../index.html', `file://${__filename}`), 'utf8');
 assert.doesNotMatch(html, /snapped|자동 정렬\(스냅\)/, 'coordinate reader must remain free-moving');
 assert.doesNotMatch(html, /id="(?:prot|ruler|tgProt|tgRuler)"/, 'unused protractor and ruler must stay removed');
+assert.doesNotMatch(html, /\bglobalThis\b/, 'mobile bootstrap must not require globalThis');
+assert.match(html, /class="mapviewport"/, 'map must have a fixed square mobile viewport');
+assert.match(html, /mapviewport::before[^}]*padding-top:100%/, 'mobile square must not depend only on aspect-ratio');
+assert.match(html, /ZOOM_LEVELS=\[1,1\.5,2,3\]/, 'map and reader must support proportional zoom');
+assert.match(html, /typeof mq\.addListener===['"]function['"]/, 'legacy Safari media-query listener fallback must exist');
+assert.match(html, /id="mapStatus"/, 'canvas failures must show a visible fallback instead of a blank map');
 const match = html.match(/<script>([\s\S]*)<\/script>/);
 assert.ok(match, 'inline application script must exist');
 
@@ -35,9 +41,11 @@ const context2d = new Proxy({}, {
 function element(id=''){
   return {
     id, value:'', textContent:'', innerHTML:'', hidden:false, width:780, height:780,
-    offsetLeft:0, offsetTop:0, clientWidth:780, clientHeight:780,
+    offsetLeft:0, offsetTop:0, offsetWidth:156, offsetHeight:156,
+    clientWidth:780, clientHeight:780, scrollWidth:780, scrollHeight:780,
+    scrollLeft:0, scrollTop:0,
     style:{}, className:'', classList:classList(),
-    addEventListener(){}, setPointerCapture(){}, setAttribute(){},
+    addEventListener(){}, setPointerCapture(){}, setAttribute(name,value){ this[name]=String(value); },
     getContext(){ return context2d; },
     getBoundingClientRect(){ return {left:0,top:0,width:780,height:780}; },
     querySelector(){ return element(`${id}-child`); }, click(){}
@@ -64,21 +72,29 @@ const document = {
 
 const sandbox = {
   console, document, URL, URLSearchParams, Math, Number, String, Array, Object,
-  Uint32Array, parseFloat, isNaN, setTimeout, clearTimeout, crypto:webcrypto,
+  Uint32Array, parseFloat, isNaN, isFinite, setTimeout, clearTimeout, crypto:webcrypto,
+  requestAnimationFrame:fn=>{ fn(); return 1; },
   globalThis:null,
-  location:{href:'https://example.test/index.html'},
+  location:{href:'https://example.test/index.html',search:''},
   history:{replaceState(){}},
   getComputedStyle:()=>({getPropertyValue:name=>({
     '--paper':'#fff','--ink':'#111','--muted':'#666','--brown':'#765','--water':'#168'
   }[name]||'#000')}),
-  window:{matchMedia:()=>({addEventListener(){}})}
+  window:{crypto:webcrypto,console,matchMedia:()=>({addEventListener(){}})}
 };
 sandbox.globalThis=sandbox;
 vm.createContext(sandbox);
 vm.runInContext(match[1], sandbox, {filename:'index.html'});
 assert.match(get('scaleSvg').innerHTML, />1:25<\/text>/, '1:25 coordinate grid must be rendered');
+assert.equal(get('mapStatus').hidden, true, 'successful bootstrap must uncover the map');
+assert.equal(get('mapViewport')['aria-busy'], 'false', 'successful bootstrap must clear busy state');
 
 const evaluate = code => vm.runInContext(code, sandbox);
+evaluate('setZoom(1)');
+assert.equal(get('frame').style.width, '150%', 'zoom must enlarge the full map frame');
+assert.equal(get('frame').style.height, '150%', 'zoom must preserve the square map frame');
+assert.equal(get('zoomRead').textContent, '150%');
+evaluate('setZoom(0)');
 assert.equal(evaluate('Math.round(azDeg({x:10,y:10},{x:10,y:0}))'), 0);
 assert.equal(evaluate('Math.round(azDeg({x:10,y:10},{x:20,y:10}))'), 90);
 assert.equal(evaluate('Math.round(azDeg({x:10,y:10},{x:10,y:20}))'), 180);
