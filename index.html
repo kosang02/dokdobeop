@@ -33,28 +33,49 @@ h1{ margin:3px 0 2px; font-size:27px; letter-spacing:-.025em; text-wrap:balance;
 
 .wrap{ max-width:1180px; margin:14px auto 60px; padding:0 20px;
   display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:20px; align-items:start; }
+.wrap>div{ min-width:0; }
 @media (max-width:940px){ .wrap{ grid-template-columns:1fr; } }
 
 .mapmeta{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12.5px; color:var(--muted);
   padding:8px 2px; }
 .mapmeta b{ color:var(--ink); font-weight:600; }
-.mapframe{ position:relative; border:1.5px solid var(--ink); background:var(--paper);
-  box-shadow:0 1px 3px rgba(0,0,0,.12); }
-canvas{ display:block; width:100%; height:auto; }
+
+/* padding 비율로 정사각형을 확보해 aspect-ratio 미지원 모바일에서도 높이가 0이 되지 않는다. */
+.mapviewport{ position:relative; width:100%; overflow:auto; overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch; border:1.5px solid var(--ink); background:var(--paper);
+  box-shadow:0 1px 3px rgba(0,0,0,.12); scrollbar-gutter:stable; }
+.mapviewport::before{ content:""; display:block; padding-top:100%; }
+.mapframe{ position:absolute; top:0; right:0; bottom:0; left:0; width:auto; height:auto; background:var(--paper); }
+canvas{ position:absolute; top:0; right:0; bottom:0; left:0; display:block; width:100%; height:100%; }
+.mapstatus{ position:absolute; top:0; right:0; bottom:0; left:0; z-index:5; display:grid; place-items:center; padding:18px;
+  background:var(--paper); color:var(--muted); text-align:center; }
+.mapstatus[hidden]{ display:none; }
+.status-card{ max-width:300px; padding:14px 16px; background:var(--card);
+  border:1px solid var(--line); border-radius:4px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+.status-card strong{ display:block; color:var(--ink); margin-bottom:4px; }
+.status-card span{ display:block; font-size:13px; }
+.status-card button{ margin-top:10px; }
 .legend{ display:flex; flex-wrap:wrap; gap:4px 16px; font-size:12px; color:var(--muted); padding:8px 2px; }
 
-/* 좌표 판독판 오버레이 */
-#scale{ position:absolute; left:8%; top:8%; width:20%; aspect-ratio:1/1;
-  cursor:grab; touch-action:none; display:none; }
+/* 좌표 판독판 오버레이 — 지도와 함께 확대되어 1km 축척 비율을 유지한다. */
+#scale{ position:absolute; z-index:2; left:8%; top:8%; width:20%; height:20%; aspect-ratio:1/1;
+  cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; display:none; }
 #scale.on{ display:block; }
 #scale svg{ display:block; width:100%; height:100%; overflow:visible; }
+#scale text{ paint-order:stroke fill; stroke:var(--paper); stroke-width:2.2px;
+  stroke-linejoin:round; font-weight:700; }
 #scale.grab{ cursor:grabbing; }
 
 .tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:2px 2px 8px; }
 .tools span{ font-size:12.5px; color:var(--muted); }
-.tools button{ padding:6px 13px; font-size:12.5px; font-weight:600; cursor:pointer;
+.tools button{ min-height:36px; padding:6px 13px; font-size:12.5px; font-weight:600; cursor:pointer;
   background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:4px; }
 .tools button.on{ background:var(--amber); color:#fff; border-color:var(--amber); }
+.tools button:disabled{ opacity:.38; cursor:not-allowed; }
+.zoomtools{ margin-left:auto; display:flex; align-items:center; gap:5px; }
+.zoomtools button{ min-width:36px; padding-inline:9px; }
+.zoomtools output{ min-width:47px; text-align:center; font-size:12.5px; color:var(--ink);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
 
 .panel{ background:var(--card); border:1px solid var(--line); border-radius:2px; padding:16px; }
 .tabs{ display:flex; gap:5px; margin-bottom:14px; }
@@ -107,6 +128,32 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
 #cmpRead{ text-align:center; margin-top:6px; }
 .finebtns{ display:flex; justify-content:center; align-items:center; gap:8px; margin:6px 0 2px; }
 .finebtns button{ min-width:44px; }
+@media (max-width:940px){
+  header{ padding:18px 14px 4px; }
+  .wrap{ margin-top:10px; padding:0 14px; gap:16px; }
+}
+@media (max-width:520px){
+  body{ line-height:1.48; }
+  header{ padding:14px 10px 2px; }
+  h1{ font-size:23px; }
+  .sub{ font-size:13px; }
+  .wrap{ margin:8px auto 36px; padding:0 8px; gap:14px; }
+  .mapmeta{ gap:3px 12px; padding-block:6px; font-size:11.5px; }
+  .tools{ gap:6px; }
+  .tools>span:first-child{ display:none; }
+  .tools button{ min-height:44px; }
+  .zoomtools{ margin-left:0; }
+  .zoomtools>span{ position:absolute; width:1px; height:1px; overflow:hidden;
+    clip-path:inset(50%); white-space:nowrap; }
+  .panel{ padding:12px; }
+  .tabs{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tabs button{ min-height:44px; }
+  .row{ align-items:stretch; }
+  .row label{ width:100%; min-width:0; }
+  input[type=text],input[type=number]{ flex:1 1 150px; width:auto; min-width:0; }
+  button.act,button.ghost{ min-height:44px; }
+  .legend{ font-size:11.5px; gap:3px 12px; }
+}
 @media (prefers-reduced-motion: no-preference){
   .tabs button, button.act, button.ghost{ transition:background .15s, color .15s, border-color .15s; }
 }
@@ -121,17 +168,34 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
 </header>
 
 <div class="wrap">
-  <div>
+  <div class="map-column">
     <div class="mapmeta mono" id="mapmeta"></div>
     <div class="tools"><span>도구:</span>
-      <button id="tgScale">1:25 좌표판독판</button>
-    </div>
-    <div class="mapframe" id="frame">
-      <canvas id="map" width="780" height="780"></canvas>
-      <div id="scale" aria-label="좌표 판독판 (드래그로 이동)">
-        <svg viewBox="0 0 156 156" id="scaleSvg"></svg>
+      <button type="button" id="tgScale" aria-pressed="false">1:25 좌표판독판</button>
+      <div class="zoomtools" role="group" aria-label="지도 확대">
+        <span>지도 확대</span>
+        <button type="button" id="zoomOut" aria-label="지도 축소" disabled>−</button>
+        <output id="zoomRead" aria-live="polite">100%</output>
+        <button type="button" id="zoomIn" aria-label="지도 확대">＋</button>
+        <button type="button" id="zoomFit">전체</button>
       </div>
     </div>
+    <div class="mapviewport" id="mapViewport" aria-busy="true">
+      <div class="mapframe" id="frame">
+        <canvas id="map" width="780" height="780" aria-label="5 × 5km 모의 지형도"></canvas>
+        <div id="scale" aria-label="1:25 좌표 판독판 (드래그로 이동)">
+          <svg viewBox="0 0 156 156" id="scaleSvg" aria-hidden="true"></svg>
+        </div>
+        <div class="mapstatus" id="mapStatus" role="status" aria-live="polite">
+          <div class="status-card">
+            <strong id="mapStatusTitle">지도 준비 중…</strong>
+            <span id="mapStatusText">잠시만 기다려 주세요.</span>
+            <button type="button" class="ghost" id="retryMap" hidden>다시 시도</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <noscript><p class="q">지도를 표시하려면 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
     <div class="legend">
       <span>▲ 산정상·삼각점(표고)</span><span>◉ 통신탑</span><span>■ 마을회관</span>
       <span style="color:var(--water)">◍ 저수지</span>
@@ -242,9 +306,34 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
 <script>
 "use strict";
 const KM=5, PXKM=156, TEN=PXKM/10, SIZE=KM*PXKM;
-const cv=document.getElementById('map'), ctx=cv.getContext('2d');
+const cv=document.getElementById('map');
 const base=document.createElement('canvas'); base.width=base.height=SIZE;
-const bctx=base.getContext('2d');
+const mapViewport=document.getElementById('mapViewport');
+const mapStatus=document.getElementById('mapStatus');
+let ctx=null, bctx=null, appReady=false, initRunning=false;
+
+function setMapStatus(state,title,message){
+  const ready=state==='ready';
+  mapStatus.hidden=ready;
+  mapViewport.setAttribute('aria-busy',String(state==='loading'));
+  document.getElementById('mapStatusTitle').textContent=title||'';
+  document.getElementById('mapStatusText').textContent=message||'';
+  document.getElementById('retryMap').hidden=state!=='error';
+}
+function ensureContexts(){
+  if(ctx&&bctx) return;
+  try{ ctx=cv.getContext('2d',{alpha:false}); bctx=base.getContext('2d',{alpha:false}); }
+  catch(_){ ctx=null; bctx=null; }
+  if(!ctx) ctx=cv.getContext('2d');
+  if(!bctx) bctx=base.getContext('2d');
+  if(!ctx||!bctx) throw new Error('Canvas 2D context unavailable');
+}
+function failMap(err){
+  appReady=false;
+  setMapStatus('error','지도를 표시하지 못했습니다.',
+    '브라우저를 새로고침하거나 최신 Safari·Chrome에서 다시 열어 주세요.');
+  if(window.console&&console.error) console.error('[독도법 훈련판] 지도 초기화 실패',err);
+}
 
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;
   let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
@@ -396,6 +485,7 @@ function azDeg(a,b){ const ang=Math.atan2(b.x-a.x, a.y-b.y);
 
 /* ---------- 그리기 ---------- */
 function draw(){
+  if(!ctx||!bctx) return;
   ctx.clearRect(0,0,SIZE,SIZE); ctx.drawImage(base,0,0);
   if(mode===1&&P1.t){ mark(P1.t,"#B23A2E");
     if(P1.done) ring(P1.t,"#3F7A46"); }
@@ -698,7 +788,7 @@ const sc=document.getElementById('scale');
 (function(){ // 실물 1:25 격자: 우상단 0, 좌·하 방향으로 0~1000m
   const S=156, HUNDRED=S/10, TWENTY=S/50;
   const ink="var(--ink)", accent="#B23A2E";
-  let t=`<rect x="0" y="0" width="${S}" height="${S}" fill="rgba(255,255,255,.045)" stroke="${ink}" stroke-width="1.5"/>`;
+  let t=`<rect x="0" y="0" width="${S}" height="${S}" fill="rgba(255,255,255,.16)" stroke="${ink}" stroke-width="1.5"/>`;
 
   // 상단·우측 20m 보조눈금. 100m마다 길고 굵게 표시한다.
   for(let i=1;i<50;i++){
@@ -728,22 +818,60 @@ const sc=document.getElementById('scale');
 // 자유 드래그 — 세부 좌표 판독을 방해하는 스냅은 적용하지 않는다.
 function draggable(el){
   let d=null;
+  const finish=()=>{ d=null; el.classList.remove('grab'); };
   el.addEventListener('pointerdown',e=>{
-    if(e.target.classList&&e.target.classList.contains('rh')) return;
-    el.setPointerCapture(e.pointerId); el.classList.add('grab');
-    d={dx:e.clientX-el.offsetLeft, dy:e.clientY-el.offsetTop}; });
+    if(typeof e.button==='number'&&e.button!==0) return;
+    const fr=document.getElementById('frame');
+    d={x:e.clientX,y:e.clientY,left:el.offsetLeft,top:el.offsetTop};
+    try{ el.setPointerCapture(e.pointerId); }catch(_){ /* 구형 브라우저 */ }
+    el.classList.add('grab');
+    e.preventDefault(); });
   el.addEventListener('pointermove',e=>{ if(!d) return;
     const fr=document.getElementById('frame');
-    let x=e.clientX-d.dx, y=e.clientY-d.dy;
-    x=Math.max(-30,Math.min(fr.clientWidth-40,x));
-    y=Math.max(-30,Math.min(fr.clientHeight-30,y));
-    el.style.left=x+'px'; el.style.top=y+'px'; });
-  el.addEventListener('pointerup',()=>{ d=null; el.classList.remove('grab'); });
+    let x=d.left+(e.clientX-d.x), y=d.top+(e.clientY-d.y);
+    x=Math.max(0,Math.min(fr.clientWidth-el.offsetWidth,x));
+    y=Math.max(0,Math.min(fr.clientHeight-el.offsetHeight,y));
+    el.style.left=(x/fr.clientWidth*100)+'%';
+    el.style.top=(y/fr.clientHeight*100)+'%'; });
+  el.addEventListener('pointerup',finish);
+  el.addEventListener('pointercancel',finish);
+  el.addEventListener('lostpointercapture',finish);
 }
 draggable(sc);
 const scaleToggle=document.getElementById('tgScale');
-scaleToggle.onclick=()=>{ sc.classList.toggle('on');
-  scaleToggle.classList.toggle('on',sc.classList.contains('on')); };
+scaleToggle.onclick=()=>{ const on=sc.classList.toggle('on');
+  scaleToggle.classList.toggle('on',on);
+  scaleToggle.setAttribute('aria-pressed',String(on)); };
+
+/* 지도와 판독판을 같은 비율로 확대한다. 판독판만 커져 축척이 틀어지는 일은 없다. */
+const frame=document.getElementById('frame');
+const ZOOM_LEVELS=[1,1.5,2,3];
+let zoomIndex=0;
+function setZoom(next){
+  next=Math.max(0,Math.min(ZOOM_LEVELS.length-1,next));
+  if(next===zoomIndex) return;
+  const oldSW=Math.max(1,mapViewport.scrollWidth), oldSH=Math.max(1,mapViewport.scrollHeight);
+  const cx=(mapViewport.scrollLeft+mapViewport.clientWidth/2)/oldSW;
+  const cy=(mapViewport.scrollTop+mapViewport.clientHeight/2)/oldSH;
+  const scaleVisible=sc.classList.contains('on');
+  const sx=scaleVisible?sc.offsetLeft/Math.max(1,frame.clientWidth):0;
+  const sy=scaleVisible?sc.offsetTop/Math.max(1,frame.clientHeight):0;
+  zoomIndex=next;
+  const z=ZOOM_LEVELS[zoomIndex];
+  frame.style.width=(z*100)+'%';
+  frame.style.height=(z*100)+'%';
+  if(scaleVisible){ sc.style.left=(sx*100)+'%'; sc.style.top=(sy*100)+'%'; }
+  mapViewport.scrollLeft=cx*mapViewport.scrollWidth-mapViewport.clientWidth/2;
+  mapViewport.scrollTop=cy*mapViewport.scrollHeight-mapViewport.clientHeight/2;
+  const out=document.getElementById('zoomRead');
+  out.value=Math.round(z*100)+'%'; out.textContent=out.value;
+  document.getElementById('zoomOut').disabled=zoomIndex===0;
+  document.getElementById('zoomIn').disabled=zoomIndex===ZOOM_LEVELS.length-1;
+}
+document.getElementById('zoomOut').onclick=()=>setZoom(zoomIndex-1);
+document.getElementById('zoomIn').onclick=()=>setZoom(zoomIndex+1);
+document.getElementById('zoomFit').onclick=()=>{ setZoom(0);
+  mapViewport.scrollLeft=0; mapViewport.scrollTop=0; };
 
 /* ---------- 모드·버튼 ---------- */
 function setMode(m){ mode=m; fb.className='';
@@ -757,33 +885,65 @@ function newProblem(){ fb.className='';
   if(mode===1) newQ1(); else if(mode===2) newQ2();
   else if(mode===3) newQ3(); else newQ4();
   draw(); }
-document.getElementById('tab1').onclick=()=>setMode(1);
-document.getElementById('tab2').onclick=()=>setMode(2);
-document.getElementById('tab3').onclick=()=>setMode(3);
-document.getElementById('tab4').onclick=()=>setMode(4);
-document.getElementById('newQ').onclick=newProblem;
+document.getElementById('tab1').onclick=()=>{ if(appReady) setMode(1); };
+document.getElementById('tab2').onclick=()=>{ if(appReady) setMode(2); };
+document.getElementById('tab3').onclick=()=>{ if(appReady) setMode(3); };
+document.getElementById('tab4').onclick=()=>{ if(appReady) setMode(4); };
+document.getElementById('newQ').onclick=()=>{ if(appReady) newProblem(); };
 function freshSeed(){
-  if(globalThis.crypto&&crypto.getRandomValues){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]; }
+  const secure=(typeof window!=='undefined')&&(window.crypto||window.msCrypto);
+  if(secure&&typeof secure.getRandomValues==='function'){
+    const a=new Uint32Array(1); secure.getRandomValues(a); return a[0]; }
   return (Math.random()*0x100000000)>>>0;
 }
+function requestedSeedFromUrl(){
+  let raw=null;
+  try{
+    if(typeof URLSearchParams==='function') raw=new URLSearchParams(location.search).get('map');
+    else{ const m=/(?:^|[?&])map=(\d+)/.exec(location.search); raw=m?m[1]:null; }
+  }catch(_){ raw=null; }
+  const n=raw===null?NaN:Number(raw);
+  return isFinite(n)&&Math.floor(n)===n&&n>=0&&n<=0xFFFFFFFF?n:freshSeed();
+}
 function loadMap(seed){
+  ensureContexts();
   genMap(seed);
   try{ const u=new URL(location.href); u.searchParams.set('map',String(M.seed)); history.replaceState(null,'',u); }
   catch(_){ /* file:// 등 주소를 바꿀 수 없는 환경에서는 지도만 생성 */ }
 }
-document.getElementById('newMap').onclick=()=>{ loadMap(freshSeed()); newProblem(); };
+let themeBound=false;
+function bindThemeRedraw(){
+  if(themeBound||typeof window.matchMedia!=='function') return;
+  const mq=window.matchMedia('(prefers-color-scheme: dark)');
+  const repaint=()=>{ if(appReady&&M.F){ renderBase(M.F,M.N,M.cell); draw(); } };
+  if(typeof mq.addEventListener==='function') mq.addEventListener('change',repaint);
+  else if(typeof mq.addListener==='function') mq.addListener(repaint);
+  themeBound=true;
+}
+function bootMap(seed,resetMode){
+  if(initRunning) return;
+  initRunning=true; appReady=false;
+  setMapStatus('loading','지도 준비 중…','지형과 등고선을 계산하고 있습니다.');
+  const run=()=>{
+    try{
+      loadMap(seed);
+      appReady=true;
+      if(resetMode) setMode(1); else newProblem();
+      bindThemeRedraw();
+      setMapStatus('ready','','');
+    }catch(err){ failMap(err); }
+    finally{ initRunning=false; }
+  };
+  if(typeof requestAnimationFrame==='function') requestAnimationFrame(run);
+  else setTimeout(run,0);
+}
+document.getElementById('newMap').onclick=()=>{ if(appReady) bootMap(freshSeed(),false); };
+document.getElementById('retryMap').onclick=()=>bootMap(requestedSeedFromUrl(),true);
 const okOf={in1:'ok1',in3:'ok3',in4:'ok4'};
 Object.keys(okOf).forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
   if(e.key==='Enter') document.getElementById(okOf[id]).click(); }));
 
-const rawSeed=new URLSearchParams(location.search).get('map');
-const requestedSeed=rawSeed===null?NaN:Number(rawSeed);
-loadMap(Number.isInteger(requestedSeed)&&requestedSeed>=0&&requestedSeed<=0xFFFFFFFF?requestedSeed:freshSeed());
-setMode(1);
-
-// 시스템 다크모드 전환 시 캔버스 지도도 다시 그리기
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
-  if(M.F){ renderBase(M.F,M.N,M.cell); draw(); } });
+bootMap(requestedSeedFromUrl(),true);
 </script>
 
 </body>
