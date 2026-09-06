@@ -851,11 +851,11 @@ function setZoom(next){
   next=Math.max(0,Math.min(ZOOM_LEVELS.length-1,next));
   if(next===zoomIndex) return;
   const oldSW=Math.max(1,mapViewport.scrollWidth), oldSH=Math.max(1,mapViewport.scrollHeight);
-  const cx=(mapViewport.scrollLeft+mapViewport.clientWidth/2)/oldSW;
-  const cy=(mapViewport.scrollTop+mapViewport.clientHeight/2)/oldSH;
   const scaleVisible=sc.classList.contains('on');
   const sx=scaleVisible?sc.offsetLeft/Math.max(1,frame.clientWidth):0;
   const sy=scaleVisible?sc.offsetTop/Math.max(1,frame.clientHeight):0;
+  const cx=scaleVisible?sx+.1:(mapViewport.scrollLeft+mapViewport.clientWidth/2)/oldSW;
+  const cy=scaleVisible?sy+.1:(mapViewport.scrollTop+mapViewport.clientHeight/2)/oldSH;
   zoomIndex=next;
   const z=ZOOM_LEVELS[zoomIndex];
   frame.style.width=(z*100)+'%';
