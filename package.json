@@ -1,0 +1,13 @@
+{
+  "name": "dokdobeop-training-board",
+  "private": true,
+  "version": "1.0.0",
+  "description": "독도법 좌표 판독 및 후방교회 훈련판",
+  "scripts": {
+    "test": "node tests/smoke.cjs",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0"
+  }
+}
