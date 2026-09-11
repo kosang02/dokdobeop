@@ -7,162 +7,136 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
 <style>
 :root{
-  --paper:#F7F4E9; --card:#FFFEF6; --ink:#26251C; --muted:#6E6A56; --line:#DFD9C2;
-  --accent:#55632F; --accent-ink:#F7F4E9; --brown:#A0653B; --water:#33698C;
-  --danger:#B23A2E; --ok:#3F7A46; --amber:#C98A2B;
+  color-scheme:light;
+  --paper:#f3f5f7; --card:#fff; --ink:#202b36; --muted:#586572; --line:#d7dee5;
+  --accent:#244b6b; --accent-ink:#fff; --brown:#95663f; --water:#33698c;
+  --danger:#b23a2e; --ok:#357443; --amber:#936020;
 }
-@media (prefers-color-scheme: dark){
-  :root{ --paper:#181A12; --card:#20231A; --ink:#E7E4D2; --muted:#9A957C;
-         --line:#343827; --accent:#93A257; --accent-ink:#181A12; }
+@media(prefers-color-scheme:dark){
+  :root{color-scheme:dark;--paper:#151b22;--card:#1e2731;--ink:#ecf0f4;
+    --muted:#acbac7;--line:#3c4855;--accent:#a5c9e4;--accent-ink:#152634;}
 }
-:root[data-theme="dark"]{ --paper:#181A12; --card:#20231A; --ink:#E7E4D2; --muted:#9A957C;
-         --line:#343827; --accent:#93A257; --accent-ink:#181A12; }
-:root[data-theme="light"]{ --paper:#F7F4E9; --card:#FFFEF6; --ink:#26251C; --muted:#6E6A56;
-         --line:#DFD9C2; --accent:#55632F; --accent-ink:#F7F4E9; }
-
-*{ box-sizing:border-box; }
-body{ margin:0; background:var(--paper); color:var(--ink);
-  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
-  line-height:1.55; }
-.mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
-
-header{ max-width:1180px; margin:0 auto; padding:28px 20px 8px; }
-.eyebrow{ font-size:11px; letter-spacing:.22em; color:var(--accent); font-weight:700; }
-h1{ margin:2px 0 4px; font-size:30px; letter-spacing:-.01em; text-wrap:balance; }
-.sub{ margin:0; color:var(--muted); font-size:14px; max-width:62ch; }
-
-.wrap{ max-width:1180px; margin:14px auto 60px; padding:0 20px;
-  display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:20px; align-items:start; }
-@media (max-width:940px){ .wrap{ grid-template-columns:1fr; } }
-
-.mapmeta{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12.5px; color:var(--muted);
-  padding:8px 2px; }
-.mapmeta b{ color:var(--ink); font-weight:600; }
-.mapframe{ position:relative; border:1.5px solid var(--ink); background:#F7F4E9;
-  box-shadow:0 2px 10px rgba(0,0,0,.10); }
-canvas{ display:block; width:100%; height:auto; }
-.legend{ display:flex; flex-wrap:wrap; gap:4px 16px; font-size:12px; color:var(--muted); padding:8px 2px; }
-
-/* 좌표 판독판 오버레이 */
-#scale{ position:absolute; left:8%; top:8%; width:20%; aspect-ratio:1/1;
-  cursor:grab; touch-action:none; display:none; }
-#scale.on{ display:block; }
-#scale svg{ display:block; width:100%; height:100%; overflow:visible; }
-#scale.grab{ cursor:grabbing; }
-#scale.snapped{ filter:drop-shadow(0 0 7px rgba(184,122,24,.95)); }
-
-.tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:2px 2px 8px; }
-.tools span{ font-size:12.5px; color:var(--muted); }
-.tools button{ padding:6px 13px; font-size:12.5px; font-weight:600; cursor:pointer;
-  background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:4px; }
-.tools button.on{ background:var(--amber); color:#fff; border-color:var(--amber); }
-
-#prot{ position:absolute; left:28%; top:24%; width:40%; aspect-ratio:1/1;
-  display:none; cursor:grab; touch-action:none; }
-#prot.on{ display:block; }
-#ruler{ position:absolute; left:14%; top:56%; width:60%; aspect-ratio:468/46;
-  display:none; cursor:grab; touch-action:none; transform-origin:1.7% 50%; }
-#ruler.on{ display:block; }
-#prot.grab, #ruler.grab{ cursor:grabbing; }
-#prot svg, #ruler svg, #scale svg{ overflow:visible; }
-#ruler .rh, #prot .rh{ position:absolute; right:-15px; top:50%; transform:translateY(-50%);
-  width:24px; height:24px; border-radius:50%; background:var(--amber); color:#fff;
-  font-size:13px; line-height:24px; text-align:center; cursor:crosshair;
-  touch-action:none; user-select:none; }
-#prot .rh{ background:#4A6E93; }
-#ruler .azread, #prot .azread{ position:absolute; right:14px; top:-24px; font-size:11px;
-  background:var(--card); border:1px solid var(--line); border-radius:3px;
-  padding:1px 6px; color:var(--ink); white-space:nowrap; }
-#prot .azread{ right:auto; left:50%; margin-left:-34px; }
-
-.panel{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:16px; }
-.tabs{ display:flex; gap:5px; margin-bottom:14px; }
-.tabs button{ flex:1; padding:8px 2px; font-size:12.5px; font-weight:600; color:var(--muted);
-  background:transparent; border:1px solid var(--line); border-radius:4px; cursor:pointer; }
-.tabs button.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
-.tabs button:focus-visible, button:focus-visible, input:focus-visible{
-  outline:2px solid var(--accent); outline-offset:2px; }
-
-h2{ font-size:15px; margin:0 0 8px; }
-.q{ background:var(--paper); border:1px solid var(--line); border-radius:4px;
-  padding:10px 12px; font-size:14px; margin-bottom:12px; }
-.q .big{ font-size:18px; font-weight:700; }
-.row{ display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
-.row label{ font-size:13px; color:var(--muted); min-width:96px; }
-input[type=text],input[type=number]{ font-size:16px; padding:7px 9px; width:130px;
-  border:1px solid var(--line); border-radius:4px; background:var(--paper); color:var(--ink);
-  font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
-#az1,#az2,#az1b,#az2b{ width:190px; }
-button.act{ padding:8px 14px; font-size:13.5px; font-weight:600; cursor:pointer;
-  background:var(--accent); color:var(--accent-ink); border:none; border-radius:4px; }
-button.ghost{ padding:8px 12px; font-size:13px; cursor:pointer; background:transparent;
-  color:var(--ink); border:1px solid var(--line); border-radius:4px; }
-button.act:hover{ filter:brightness(1.08); }
-button.ghost:hover{ border-color:var(--muted); }
-
-#feedback{ min-height:24px; margin:12px 0; padding:10px 12px; border-radius:4px;
-  font-size:13.5px; display:none; }
-#feedback.ok{ display:block; background:color-mix(in srgb, var(--ok) 12%, transparent);
-  border:1px solid var(--ok); }
-#feedback.bad{ display:block; background:color-mix(in srgb, var(--danger) 10%, transparent);
-  border:1px solid var(--danger); }
-#feedback.info{ display:block; background:var(--paper); border:1px solid var(--line); }
-
-.score{ font-size:12.5px; color:var(--muted); margin-bottom:12px; }
-.btns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
-details{ margin-top:14px; font-size:13px; }
-summary{ cursor:pointer; font-weight:600; color:var(--accent); }
-details p, details li{ color:var(--muted); }
-details .mono{ color:var(--ink); }
-.units{ display:flex; gap:12px; font-size:13px; margin-bottom:10px; color:var(--muted); }
-.obs{ font-size:13.5px; background:var(--paper); border:1px solid var(--line);
-  border-radius:4px; padding:8px 12px; margin-bottom:10px; }
-.obs b{ font-weight:700; }
-#decl{ margin-top:8px; }
-hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
-#cmpWrap{ margin:10px 0 12px; }
-#cmpSvg{ display:block; width:100%; max-width:280px; margin:0 auto; touch-action:none;
-  cursor:crosshair; user-select:none; -webkit-user-select:none; }
-#cmpRead{ text-align:center; margin-top:6px; }
-.finebtns{ display:flex; justify-content:center; align-items:center; gap:8px; margin:6px 0 2px; }
-.finebtns button{ min-width:44px; }
-@media (prefers-reduced-motion: no-preference){
-  .tabs button, button.act, button.ghost{ transition:background .15s, color .15s, border-color .15s; }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.6}
+button,input,summary{-webkit-tap-highlight-color:transparent}
+button,input{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:default;opacity:.55}
+.mono,input{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+header{max-width:1360px;margin:auto;padding:22px 24px 0}
+h1{margin:0;font-size:22px;line-height:1.4;letter-spacing:-.04em;font-weight:750}
+.wrap{max-width:1360px;margin:18px auto 40px;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px 24px;align-items:start}
+.tabs{grid-column:1/-1;display:flex;gap:24px;border-bottom:1px solid var(--line);margin:0}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;padding:10px 2px 12px;min-height:48px;background:none;color:var(--muted);font-size:15px;font-weight:650;white-space:nowrap}
+.tabs button.on{border-bottom-color:var(--accent);color:var(--ink)}
+.map-column{min-width:0}
+.tools{display:flex;align-items:center;gap:10px;min-height:44px;margin-bottom:12px}
+.tools>span{font-size:14px;color:var(--muted)}
+.tools button{min-height:44px;padding:8px 14px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:4px;font-size:14px;font-weight:650}
+.tools button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
+.map-viewport{overflow:auto;overscroll-behavior-x:contain;background:#fafbf7;border:1px solid #aab6bd;scrollbar-color:#8798a2 #e8ecea;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.map-viewport:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.map-sheet{position:relative;width:100%;min-width:620px;padding:30px 28px 32px 36px}
+.mapframe{position:relative;width:100%;aspect-ratio:1;background:#fafbf7;border:1px solid #516675;overflow:hidden;isolation:isolate}
+#map{display:block;width:100%;height:100%;aspect-ratio:1;touch-action:pan-x pan-y pinch-zoom}
+.axis{position:absolute;pointer-events:none;color:#344a5a;font:600 14px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;line-height:1}
+.axis-x{left:37px;right:29px;height:16px}
+.axis-x.top{top:9px}.axis-x.bottom{bottom:9px}
+.axis-y{top:31px;bottom:33px;left:5px;width:26px}
+.axis span{position:absolute;white-space:nowrap}
+.axis-x span{transform:translateX(-50%)}
+.axis-y span{right:0;transform:translateY(-50%)}
+#scale{position:absolute;left:30%;top:30%;width:20%;aspect-ratio:1;display:none;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+#scale.on{display:block}
+#scale.grab{cursor:grabbing}
+#scale svg{display:block;width:100%;height:100%;overflow:visible}
+#scale:focus-visible{outline:2px dashed #244b6b;outline-offset:4px}
+.mapmeta{display:flex;flex-wrap:wrap;gap:4px 16px;padding:12px 0 0;color:var(--muted);font-size:14px}
+.mapmeta b{color:var(--ink);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:13px;color:var(--muted);padding:10px 0 0}
+.panel{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px}
+h2{font-size:17px;line-height:1.5;margin:0 0 12px;letter-spacing:-.025em}
+.score{font-size:14px;color:var(--muted);margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.q{font-size:16px;margin-bottom:20px;line-height:1.75}
+.q .big{font-size:20px;font-weight:700}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.row label{flex-basis:100%;font-size:14px;color:var(--muted)}
+input[type=text],input[type=number]{min-width:0;width:100%;min-height:46px;padding:9px 12px;border:1px solid var(--line);border-radius:3px;background:var(--card);color:var(--ink);font-size:16px}
+input[type=text]{flex:1;width:140px;letter-spacing:.04em}
+input::placeholder{color:var(--muted);opacity:1;letter-spacing:normal}
+input[type=radio]{width:18px;height:18px;accent-color:var(--accent)}
+button.act,button.ghost{min-height:44px;padding:9px 14px;border-radius:3px;font-size:14px;font-weight:650;line-height:1.5}
+button.act{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent)}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+@media(hover:hover){button.ghost:hover,.tools button:hover{border-color:var(--muted)}button.act:hover{filter:brightness(1.12)}.tabs button:hover{color:var(--ink)}}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#feedback{display:none;font-size:15px;margin:18px 0;padding:12px;border-radius:3px;overflow-wrap:anywhere}
+#feedback.ok{display:block;background:color-mix(in srgb,var(--ok) 8%,var(--card));border-left:3px solid var(--ok)}
+#feedback.bad{display:block;background:color-mix(in srgb,var(--danger) 8%,var(--card));border-left:3px solid var(--danger)}
+#feedback.info{display:block;background:var(--paper);border-left:3px solid var(--line)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.panel>.btns{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+details{margin-top:16px;font-size:14px;border-top:1px solid var(--line);padding-top:10px}
+summary{min-height:44px;display:list-item;align-content:center;cursor:pointer;font-weight:650;color:var(--muted)}
+details p,details li{color:var(--muted)}
+details .mono{color:var(--ink)}
+.units{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14px;margin-bottom:16px;color:var(--muted)}
+.units label{display:flex;gap:6px;align-items:center;min-height:44px}
+.obs{font-size:15px;background:var(--paper);border-left:2px solid var(--line);padding:10px 12px;margin-bottom:16px;overflow-wrap:anywhere}
+#decl{display:block;width:190px;height:auto;margin-top:16px}
+hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+#cmpWrap{margin:16px 0}
+#cmpSvg{display:block;width:100%;max-width:300px;margin:auto;touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none}
+#cmpRead{text-align:center;margin-top:12px}
+.finebtns{display:flex;justify-content:center;align-items:center;gap:12px;margin:10px 0}
+.finebtns button{min-width:48px}
+section>p,#cmpWrap>p,.finebtns>span{font-size:14px!important}
+@media(min-width:1051px){.panel{position:sticky;top:20px}}
+@media(max-width:1050px){.wrap{grid-template-columns:minmax(0,1fr);max-width:860px}.tabs{gap:24px}header{max-width:860px}.panel{padding:22px}.row label{flex-basis:100%}.row input[type=text]{flex:0 1 240px}}
+@media(max-width:700px){
+  header{padding:16px 16px 0}h1{font-size:20px}
+  .wrap{padding:0 16px;margin-top:12px;gap:16px}
+  .tabs{gap:0;justify-content:space-between}.tabs button{font-size:14px;padding:10px 4px}
+  .map-viewport{max-height:56svh;max-height:min(56svh,520px);min-height:260px}
+  .map-sheet{min-width:680px}
+  .panel{padding:18px}.row input[type=text]{flex:1}
+  .mapmeta{font-size:14px;gap:4px 12px}.legend{font-size:13px}
 }
+@media(prefers-reduced-motion:no-preference){button{transition:background-color .12s,border-color .12s,color .12s}}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="eyebrow">FIELD MAP READING · 야외기동 예습</div>
   <h1>독도법 연습장</h1>
-  <p class="sub">군용 지형도에서 좌표 판독과 방위각을 이용한 자기 위치 찾기(후방교회법)를 연습합니다. 지도는 매번 새로 생성됩니다.</p>
 </header>
 
-<div class="wrap">
-  <div>
-    <div class="mapmeta mono" id="mapmeta"></div>
-    <div class="tools"><span>도구:</span>
-      <button id="tgScale">좌표판독판</button>
-      <button id="tgProt">각도기</button>
-      <button id="tgRuler">축척자</button>
+<main class="wrap">
+    <div class="tabs" role="tablist">
+      <button id="tab1" role="tab" aria-controls="m1" aria-selected="true" tabindex="0" class="on">좌표 판독</button>
+      <button id="tab2" role="tab" aria-controls="m2" aria-selected="false" tabindex="-1">위치 찾기</button>
+      <button id="tab3" role="tab" aria-controls="m3" aria-selected="false" tabindex="-1">후방교회법</button>
+      <button id="tab4" role="tab" aria-controls="m4" aria-selected="false" tabindex="-1">심화</button>
     </div>
+  <div class="map-column">
+    <div class="tools"><span>도구:</span>
+      <button id="tgScale" aria-pressed="false">좌표판독판</button>
+    </div>
+    <div class="map-viewport" id="mapViewport" tabindex="0" aria-label="독도법 연습장">
+    <div class="map-sheet">
+      <div class="axis axis-x top" id="eastTop" aria-hidden="true"></div>
+      <div class="axis axis-x bottom" id="eastBottom" aria-hidden="true"></div>
+      <div class="axis axis-y" id="northAxis" aria-hidden="true"></div>
     <div class="mapframe" id="frame">
       <canvas id="map" width="780" height="780"></canvas>
-      <div id="scale" aria-label="좌표 판독판 (드래그로 이동)">
+      <div id="scale" tabindex="0" aria-label="좌표 판독판 (드래그로 이동)">
         <svg viewBox="0 0 156 156" id="scaleSvg"></svg>
       </div>
-      <div id="prot" aria-label="투명 각도기 (드래그로 이동, 손잡이로 회전)">
-        <svg viewBox="0 0 200 200" id="protSvg"></svg>
-        <div class="azread mono" id="protRead">회전 0°</div>
-        <div class="rh" title="돌려서 회전 · 더블클릭하면 원위치">↻</div>
-      </div>
-      <div id="ruler" aria-label="축척자 (드래그로 이동, 손잡이로 회전)">
-        <svg viewBox="0 0 468 46" id="rulerSvg"></svg>
-        <div class="azread mono" id="azread">90°</div>
-        <div class="rh" title="돌려서 회전">↻</div>
-      </div>
     </div>
+    </div>
+    </div>
+    <div class="mapmeta mono" id="mapmeta"></div>
     <div class="legend">
       <span>▲ 산정상·삼각점(표고)</span><span>◉ 통신탑</span><span>■ 마을회관</span>
       <span style="color:var(--water)">◍ 저수지</span>
@@ -171,19 +145,13 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
   </div>
 
   <div class="panel">
-    <div class="tabs" role="tablist">
-      <button id="tab1" class="on">좌표 판독</button>
-      <button id="tab2">위치 찾기</button>
-      <button id="tab3">후방교회법</button>
-      <button id="tab4">심화</button>
-    </div>
     <div class="score" id="score">정답 0 / 시도 0</div>
     <div class="units" id="unitRow" style="display:none">
       단위: <label><input type="radio" name="unit" value="deg" checked> 도(°)</label>
       <label><input type="radio" name="unit" value="mil"> 밀</label>
     </div>
 
-    <section id="m1">
+    <section id="m1" role="tabpanel" aria-labelledby="tab1">
       <h2>지도의 표적 → 8자리 좌표</h2>
       <div class="q">지도의 <b style="color:var(--danger)">붉은 표적 ✕</b>이 있는 지점의 <span class="big">8자리 좌표</span>를 판독하세요. (10m 단위, ±30m 인정)</div>
       <div class="row"><label for="in1">좌표 (8자리)</label>
@@ -196,14 +164,14 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
         ④ <span class="mono">동서 4자리 + 남북 4자리</span> 순으로 붙인다. 항상 "오른쪽으로, 그다음 위로".</p></details>
     </section>
 
-    <section id="m2" hidden>
+    <section id="m2" role="tabpanel" aria-labelledby="tab2" hidden>
       <h2>8자리 좌표 → 지도에서 클릭</h2>
       <div class="q">좌표 <span class="big mono" id="q2"></span> 지점을 지도에서 <b>클릭</b>하세요.</div>
       <details><summary>요령</summary>
         <p>앞 2자리씩으로 1km 격자를 찾고, 셋째 자리(100m)·넷째 자리(10m)로 격자 안 위치를 짚습니다. 오차 약 160m까지 정답으로 인정합니다.</p></details>
     </section>
 
-    <section id="m3" hidden>
+    <section id="m3" role="tabpanel" aria-labelledby="tab3" hidden>
       <h2>방위각으로 자기 위치 찾기</h2>
       <div class="q">현 위치를 모릅니다. 나침반으로 두 지형지물을 관측했습니다. <b>도자각을 적용해 도북 역방위각을 계산</b>하고 선을 그어 자기 위치의 8자리 좌표를 구하세요.</div>
       <div class="obs" id="obs"></div>
@@ -229,7 +197,7 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
         </ol></details>
     </section>
 
-    <section id="m4" hidden>
+    <section id="m4" role="tabpanel" aria-labelledby="tab4" hidden>
       <h2>심화 — 직접 측정해 위치 찾기</h2>
       <div class="q">지도에 <b>두 지형지물의 위치(①·②)만</b> 표시됩니다. 방위각은 주어지지 않습니다 — 아래 <b>나침반으로 직접 조준해 자북방위각을 측정</b>한 뒤, 도자각을 적용해 역방위각을 계산·작도하여 자기 위치의 <span class="big">8자리 좌표</span>를 구하세요.</div>
       <div class="obs" id="obs4"></div>
@@ -268,14 +236,15 @@ hr{ border:none; border-top:1px solid var(--line); margin:14px 0; }
     <div class="btns"><button class="act" id="newQ">새 문제</button>
       <button class="ghost" id="newMap">새 지도 생성</button></div>
   </div>
-</div>
+</main>
 
 <script>
 "use strict";
 const KM=5, PXKM=156, TEN=PXKM/10, SIZE=KM*PXKM;
 const cv=document.getElementById('map'), ctx=cv.getContext('2d');
-const base=document.createElement('canvas'); base.width=base.height=SIZE;
+const base=document.createElement('canvas'); base.width=base.height=SIZE*2;
 const bctx=base.getContext('2d');
+bctx.setTransform(2,0,0,2,0,0);
 
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;
   let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
@@ -333,8 +302,19 @@ function genMap(seed){
       if(M.marks.every(m=>Math.hypot(m.x-x,m.y-y)>0.75*PXKM)){
         M.marks.push({x,y,type:spec.type,name:spec.name}); break; } } }
 
+  for(const spec of [{type:'tower',name:'통신탑'},{type:'hall',name:'마을회관'}]){
+    if(M.marks.some(m=>m.type===spec.type)) continue;
+    let best=null, distance=-1;
+    for(let y=1;y<5;y++) for(let x=1;x<5;x++){
+      const p={x:x*PXKM,y:y*PXKM};
+      const d=Math.min(...M.marks.map(m=>Math.hypot(m.x-p.x,m.y-p.y)));
+      if(d>distance){best=p;distance=d;}
+    }
+    M.marks.push({...best,...spec});
+  }
   M.F=F; M.N=N; M.cell=cell;
   renderBase(F,N,cell);
+  renderAxes();
   document.getElementById('mapmeta').innerHTML =
     `<span>축척 <b>1:25,000</b></span><span>등고선 간격 <b>20m</b></span>`+
     `<span>도자각 <b>서편각 ${M.gma}°</b> (약 ${Math.round(M.gma*6400/360)}밀)</span>`+
@@ -345,11 +325,12 @@ function cssVar(name){ return getComputedStyle(document.documentElement).getProp
 
 function renderBase(F,N,cell){
   const g=bctx;
-  const paper=cssVar('--paper'), ink=cssVar('--ink'), muted=cssVar('--muted'), brown=cssVar('--brown');
+  const paper='#fafbf7', ink='#263b49', muted='#637f90', brown='#95663f';
   g.fillStyle=paper; g.fillRect(0,0,SIZE,SIZE);
   // 등고선
   const t=(v1,v2,L)=>Math.min(1,Math.max(0,(L-v1)/(v2-v1)));
-  for(let L=40;L<=400;L+=20){
+  const highest=Math.max(...F.map(row=>Math.max(...row)));
+  for(let L=40;L<=highest;L+=20){
     g.beginPath();
     for(let j=0;j<N-1;j++) for(let i=0;i<N-1;i++){
       const a=F[j][i],b=F[j][i+1],c=F[j+1][i+1],d=F[j+1][i];
@@ -378,9 +359,6 @@ function renderBase(F,N,cell){
   for(let i=0;i<=KM;i++){ const p=i*PXKM;
     g.beginPath(); g.moveTo(p,0); g.lineTo(p,SIZE); g.stroke();
     g.beginPath(); g.moveTo(0,SIZE-p); g.lineTo(SIZE,SIZE-p); g.stroke(); }
-  for(let i=0;i<KM;i++){
-    halo(g, String(M.e0+i).padStart(2,'0'), i*PXKM+3, SIZE-6, ink, paper);
-    halo(g, String(M.n0+i).padStart(2,'0'), 4, i===0?SIZE-24:SIZE-i*PXKM-5, ink, paper); }
 
   // 지형지물
   for(const m of M.marks){
@@ -400,13 +378,13 @@ function renderBase(F,N,cell){
 function tri(g,x,y,r){ g.beginPath(); g.moveTo(x,y-r); g.lineTo(x-r*0.9,y+r*0.7);
   g.lineTo(x+r*0.9,y+r*0.7); g.closePath(); g.fill(); }
 function halo(g,txt,x,y,color,bg){ g.save(); g.font="700 12px 'Apple SD Gothic Neo','Malgun Gothic',sans-serif";
-  g.strokeStyle=bg||cssVar('--paper'); g.lineWidth=3; g.lineJoin="round"; g.strokeText(txt,x,y);
+  g.strokeStyle=bg||'#fafbf7'; g.lineWidth=3; g.lineJoin="round"; g.strokeText(txt,x,y);
   g.fillStyle=color||cssVar('--ink'); g.fillText(txt,x,y); g.restore(); }
 
 /* ---------- 좌표 변환 ---------- */
 const CM=PXKM/100; // 10m가 화면에서 차지하는 픽셀
 function coordOf(x,y){ // 8자리(10m 단위)
-  const tx=Math.min(499,Math.floor(x/CM)), ty=Math.min(499,Math.floor((SIZE-y)/CM));
+  const tx=Math.max(0,Math.min(499,Math.floor(x/CM))), ty=Math.max(0,Math.min(499,Math.floor((SIZE-y)/CM)));
   return String(M.e0*100+tx).padStart(4,'0')+String(M.n0*100+ty).padStart(4,'0'); }
 function pointOf(str){
   const E=+str.slice(0,4), Nn=+str.slice(4);
@@ -418,7 +396,7 @@ function azDeg(a,b){ const ang=Math.atan2(b.x-a.x, a.y-b.y);
 
 /* ---------- 그리기 ---------- */
 function draw(){
-  ctx.clearRect(0,0,SIZE,SIZE); ctx.drawImage(base,0,0);
+  ctx.clearRect(0,0,SIZE,SIZE); ctx.drawImage(base,0,0,SIZE,SIZE);
   if(mode===1&&P1.t){ mark(P1.t,"#B23A2E");
     if(P1.done) ring(P1.t,"#3F7A46"); }
   if(mode===2){ if(P2.guess) mark(P2.guess,"#B23A2E");
@@ -434,7 +412,7 @@ function draw(){
       ctx.save(); ctx.strokeStyle=C4[i]; ctx.lineWidth=2.2; ctx.setLineDash([6,4]);
       ctx.beginPath(); ctx.arc(lm.x,lm.y,15,0,7); ctx.stroke(); ctx.restore();
       ctx.save(); ctx.font="700 15px sans-serif"; ctx.lineJoin="round";
-      ctx.strokeStyle=cssVar('--paper'); ctx.lineWidth=3;
+      ctx.strokeStyle='#fafbf7'; ctx.lineWidth=3;
       const s=i?'②':'①'; ctx.strokeText(s,lm.x+16,lm.y-13);
       ctx.fillStyle=C4[i]; ctx.fillText(s,lm.x+16,lm.y-13); ctx.restore(); });
     for(const r of P4.rays) ray(r.from,r.az,C4[r.i],false);
@@ -532,7 +510,7 @@ const fb=document.getElementById('feedback');
 function say(cls,msg){ fb.className=cls; fb.innerHTML=msg; }
 function tally(ok){ tries++; if(ok) hits++;
   document.getElementById('score').textContent=`정답 ${hits} / 시도 ${tries}`; }
-function parse8(s){ s=s.replace(/\D/g,''); return s.length===8?s:null; }
+function parse8(s){ s=s.trim().replace(/\s+/g,''); return /^\d{8}$/.test(s)?s:null; }
 
 document.getElementById('ok1').onclick=()=>{
   if(P1.done) return;
@@ -547,7 +525,7 @@ document.getElementById('ok1').onclick=()=>{
 cv.addEventListener('click',ev=>{
   if(mode!==2||P2.done||!P2.code) return;
   const r=cv.getBoundingClientRect();
-  const p={x:(ev.clientX-r.left)*cv.width/r.width, y:(ev.clientY-r.top)*cv.height/r.height};
+  const p={x:(ev.clientX-r.left)*SIZE/r.width, y:(ev.clientY-r.top)*SIZE/r.height};
   P2.guess=p; P2.done=true;
   const d=Math.hypot(p.x-P2.truth.x,p.y-P2.truth.y);
   const ok=d<=25; tally(ok); draw();
@@ -555,7 +533,7 @@ cv.addEventListener('click',ev=>{
     :`오답 — 실제 지점(초록 ○)에서 약 ${Math.round(d/PXKM*1000)}m 벗어났습니다.`); });
 
 function readAz(id){ const v=parseFloat(document.getElementById(id).value);
-  if(isNaN(v)) return null;
+  if(!Number.isFinite(v)) return null;
   const d=unit()==='deg'?v:v*360/6400; return ((d%360)+360)%360; }
 function updateRays(){ if(!P3.lms) return;
   const a1=readAz('az1'), a2=readAz('az2');
@@ -587,9 +565,23 @@ document.getElementById('solBtn').onclick=()=>{
     const g=P3.trueAz(lm), back=(g+180)%360;
     return `${lm.name}: 자북 <span class="mono">${fmtAz(P3.obs[i])}</span> − 도자각 <span class="mono">${fmtAz(M.gma)}</span> = 도북 <span class="mono">${fmtAz(g)}</span> → 역방위각 <span class="mono">${fmtAz(back)}</span>`; });
   say('info', rows.join('<br>')+`<br>교차점 좌표: <b class="mono">${coordOf(P3.p.x,P3.p.y)}</b>`); };
+let previousUnit=unit();
 document.querySelectorAll('input[name=unit]').forEach(r=>r.onchange=()=>{
+  const nextUnit=unit();
+  if(nextUnit===previousUnit) return;
+  const ids=mode===4?['az1b','az2b','in4']:['az1','az2','in3'];
+  const values=ids.map(id=>document.getElementById(id).value);
   if(P3.lms&&mode===3) renderObs();
-  if(P4.lms&&mode===4){ renderObs4(); buildCompass(); } });
+  if(P4.lms&&mode===4){renderObs4();buildCompass();}
+  ids.forEach((id,i)=>{
+    const value=values[i];
+    document.getElementById(id).value=i===2||value.trim()===''?value:
+      String(Math.round(Number(value)*(nextUnit==='mil'?6400/360:360/6400)*1000000)/1000000);
+  });
+  previousUnit=nextUnit;
+  if(mode===3) updateRays();
+  if(mode===4) updateRays4();
+});
 
 /* ---------- 심화 모드: 가상 나침반 ---------- */
 function renderObs4(){
@@ -653,7 +645,7 @@ function updateSight(){
   cmp.addEventListener('pointerdown',e=>{ if(!P4.lms) return;
     aiming=true; cmp.setPointerCapture(e.pointerId); aimFrom(e); });
   cmp.addEventListener('pointermove',e=>{ if(aiming) aimFrom(e); });
-  cmp.addEventListener('pointerup',()=>{ aiming=false; });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>cmp.addEventListener(type,()=>{aiming=false;}));
   const bump=d=>{ if(!P4.lms) return;
     const st=aimStep(); P4.aim=((P4.aim+d*st)%360+360)%360; updateSight(); };
   document.getElementById('aimM').onclick=()=>bump(-1);
@@ -693,127 +685,119 @@ document.getElementById('solBtn4').onclick=()=>{
 
 /* ---------- 판독판 ---------- */
 const sc=document.getElementById('scale');
-(function(){ // 좌표 판독판: 기준점(0)은 우상단 모서리, 좌로·아래로 0~1000m(10등분)
-  const S=156, D=10, U=S/D, C1="#B87A18", C2="#8A5E10";
-  let t=`<rect x="0" y="0" width="${S}" height="${S}" fill="rgba(255,196,66,.14)" stroke="${C1}" stroke-width="2"/>`;
-  t+=`<circle cx="${S}" cy="0" r="3.2" fill="#B23A2E"/>`;
-  t+=`<text x="${S-14}" y="13" font-size="8.5" font-weight="700" fill="#B23A2E">0</text>`;
-  for(let i=1;i<=D;i++){ const p=i*U;
-    const len=(i%5===0)?17:12;
-    // 상단 눈금(오른쪽→왼쪽으로 증가) · 우측 눈금(위→아래로 증가)
-    t+=`<line x1="${S-p}" y1="0" x2="${S-p}" y2="${len}" stroke="${C1}" stroke-width="${i%5?1:1.6}"/>`;
-    t+=`<line x1="${S}" y1="${p}" x2="${S-len}" y2="${p}" stroke="${C1}" stroke-width="${i%5?1:1.6}"/>`;
-    if(i<D){ t+=`<text x="${S-p-2.7}" y="26" font-size="8.5" font-weight="700" fill="${C2}">${i}</text>`;
-      t+=`<text x="${S-27}" y="${p+3}" font-size="8.5" font-weight="700" fill="${C2}">${i}</text>`; }
-    else{ t+=`<text x="1" y="26" font-size="7" font-weight="700" fill="${C2}">1000</text>`;
-      t+=`<text x="${S-31}" y="${S-4}" font-size="7" font-weight="700" fill="${C2}">1000</text>`; }
-    // 보조눈금(반 칸)
-    const h=p-U/2;
-    t+=`<line x1="${S-h}" y1="0" x2="${S-h}" y2="6" stroke="${C1}" stroke-width=".7"/>`;
-    t+=`<line x1="${S}" y1="${h}" x2="${S-6}" y2="${h}" stroke="${C1}" stroke-width=".7"/>`; }
-  t+=`<text x="${S/2}" y="${S/2+30}" text-anchor="middle" font-size="7.5" fill="${C2}">빨간 0 모서리를 지점 위에 놓고</text>`;
-  t+=`<text x="${S/2}" y="${S/2+41}" text-anchor="middle" font-size="7.5" fill="${C2}">왼쪽 격자선 눈금=동서 · 아래 격자선 눈금=남북</text>`;
-  t+=`<text x="${S/2-38}" y="${S+15}" font-size="9" font-weight="700" fill="${C2}">좌표 판독판 · 1km(1000m)</text>`;
-  document.getElementById('scaleSvg').innerHTML=t; })();
-
-(function(){ // 투명 각도기(도북 기준, 북=0°)
-  const C="#4A6E93";
-  let t=`<circle cx="100" cy="100" r="92" fill="rgba(90,130,180,.10)" stroke="${C}" stroke-width="1.6"/>`;
-  t+=`<line x1="100" y1="8" x2="100" y2="192" stroke="${C}" stroke-width=".5" opacity=".55" stroke-dasharray="3 3"/>`;
-  t+=`<line x1="8" y1="100" x2="192" y2="100" stroke="${C}" stroke-width=".5" opacity=".55" stroke-dasharray="3 3"/>`;
-  t+=`<circle cx="100" cy="100" r="2.2" fill="${C}"/>`;
-  for(let a=0;a<360;a+=2){
-    const s=Math.sin(a*Math.PI/180), c=Math.cos(a*Math.PI/180);
-    const r1=(a%10===0)?82:87;
-    t+=`<line x1="${(100+r1*s).toFixed(1)}" y1="${(100-r1*c).toFixed(1)}" x2="${(100+92*s).toFixed(1)}" y2="${(100-92*c).toFixed(1)}" stroke="${C}" stroke-width="${a%30===0?1.2:0.6}"/>`;
-    if(a%10===0) t+=`<text transform="rotate(${a} 100 100)" x="100" y="27" text-anchor="middle" font-size="${a%90===0?9:6.5}" font-weight="${a%90===0?700:400}" fill="${a===0?'#B23A2E':C}">${a}</text>`; }
-  t+=`<text x="100" y="4" text-anchor="middle" font-size="8" font-weight="700" fill="#B23A2E">북(도북)</text>`;
-  t+=`<text x="100" y="126" text-anchor="middle" font-size="8" fill="${C}">중심을 지점에 맞추고 읽기</text>`;
-  document.getElementById('protSvg').innerHTML=t; })();
-
-(function(){ // 축척자 1:25,000 (3km)
-  const C1="#B87A18", C2="#8A5E10", U=PXKM/10;
-  let t=`<rect x="0" y="14" width="468" height="26" fill="rgba(255,196,66,.14)" stroke="${C1}" stroke-width="1.6"/>`;
-  t+=`<circle cx="8" cy="27" r="2.6" fill="#B23A2E"/>`;
-  for(let i=0;i<=30;i++){ const x=i*U;
-    const km=(i%10===0), half=(i%5===0);
-    t+=`<line x1="${x}" y1="14" x2="${x}" y2="${14+(km?14:half?10:6)}" stroke="${C1}" stroke-width="${km?1.5:half?1:.7}"/>`;
-    if(half) t+=`<text x="${x}" y="11" text-anchor="middle" font-size="7.5" font-weight="${km?700:400}" fill="${C2}">${i===0?"0":(i/10)+"km"}</text>`; }
-  t+=`<text x="380" y="33" font-size="8" font-weight="700" fill="${C2}">축척 1:25,000</text>`;
-  document.getElementById('rulerSvg').innerHTML=t; })();
-
-// 공통 드래그 (축척자는 손잡이 회전 별도)
-function draggable(el){
-  let d=null;
-  el.addEventListener('pointerdown',e=>{
-    if(e.target.classList&&e.target.classList.contains('rh')) return;
-    el.setPointerCapture(e.pointerId); el.classList.add('grab');
-    d={dx:e.clientX-el.offsetLeft, dy:e.clientY-el.offsetTop}; });
-  el.addEventListener('pointermove',e=>{ if(!d) return;
-    const fr=document.getElementById('frame');
-    let x=e.clientX-d.dx, y=e.clientY-d.dy;
-    x=Math.max(-30,Math.min(fr.clientWidth-40,x));
-    y=Math.max(-30,Math.min(fr.clientHeight-30,y));
-    el.style.left=x+'px'; el.style.top=y+'px'; });
-  el.addEventListener('pointerup',()=>{ d=null; el.classList.remove('grab');
-    if(el.id!=='scale') return;
-    // 판독판: 격자 교차점 근처에서 놓으면 자동 정렬(스냅)
-    const fr=document.getElementById('frame'), g=fr.clientWidth/KM;
-    const x=el.offsetLeft, y=el.offsetTop;
-    const sx=Math.round(x/g)*g, sy=Math.round(y/g)*g;
-    if(Math.abs(sx-x)<15&&Math.abs(sy-y)<15&&sx>=0&&sy>=0
-       &&sx<=fr.clientWidth-el.clientWidth+1&&sy<=fr.clientHeight-el.clientHeight+1){
-      el.style.left=sx+'px'; el.style.top=sy+'px';
-      el.classList.add('snapped'); setTimeout(()=>el.classList.remove('snapped'),450); } });
+const frame=document.getElementById('frame');
+const viewport=document.getElementById('mapViewport');
+const scalePosition={x:SIZE*.5,y:SIZE*.3}; // Logical position of the upper-right zero.
+function renderAxes(){
+  let e='', n='';
+  for(let i=0;i<=KM;i++){
+    e+=`<span style="left:${i/KM*100}%">${String(M.e0+i).padStart(2,'0')}</span>`;
+    n+=`<span style="top:${(1-i/KM)*100}%">${String(M.n0+i).padStart(2,'0')}</span>`;
+  }
+  document.getElementById('eastTop').innerHTML=e;
+  document.getElementById('eastBottom').innerHTML=e;
+  document.getElementById('northAxis').innerHTML=n;
 }
-draggable(sc);
-draggable(document.getElementById('prot'));
-const ruler=document.getElementById('ruler');
-draggable(ruler);
-// 축척자 회전 손잡이
 (function(){
-  const rh=ruler.querySelector('.rh'); let rot=false;
-  function pivot(){ const fr=document.getElementById('frame').getBoundingClientRect();
-    return {x:fr.left+ruler.offsetLeft+ruler.clientWidth*8/468,
-            y:fr.top+ruler.offsetTop+ruler.clientHeight/2}; }
-  rh.addEventListener('pointerdown',e=>{ e.stopPropagation();
-    rh.setPointerCapture(e.pointerId); rot=true; });
-  rh.addEventListener('pointermove',e=>{ if(!rot) return;
-    const p=pivot();
-    const a=Math.atan2(e.clientY-p.y, e.clientX-p.x)*180/Math.PI;
-    ruler.style.transform=`rotate(${a}deg)`;
-    const az=((a+90)%360+360)%360;
-    document.getElementById('azread').textContent="방위각 "+(Math.round(az*2)/2)+"°"; });
-  rh.addEventListener('pointerup',()=>{ rot=false; });
+  const S=156, U=S/10, C='#254d6a';
+  let t=`<rect width="156" height="156" fill="rgba(255,255,255,.04)" stroke="${C}" stroke-width="1.2"/>`;
+  for(let i=1;i<10;i++){
+    const p=i*U;
+    t+=`<path d="M ${S-p} 0 V ${S} M 0 ${p} H ${S}" fill="none" stroke="${C}" stroke-opacity="${i===5?.5:.24}" stroke-width="${i===5?1:.5}"/>`;
+    t+=`<path d="M ${S-p} 0 v 9 M ${S} ${p} h -9" stroke="${C}" stroke-width="1.2"/>`;
+    t+=`<text x="${S-p}" y="20" text-anchor="middle" font-size="10" font-weight="700" fill="${C}" stroke="#fff" stroke-width="3" paint-order="stroke">${i}</text>`;
+    if(i>1) t+=`<text x="${S-16}" y="${p+3}" text-anchor="middle" font-size="10" font-weight="700" fill="${C}" stroke="#fff" stroke-width="3" paint-order="stroke">${i}</text>`;
+    t+=`<path d="M ${S-p+U/2} 0 v 4 M ${S} ${p-U/2} h -4" stroke="${C}" stroke-width=".6"/>`;
+  }
+  t+=`<text x="${S-16}" y="10" text-anchor="middle" font-size="10" font-weight="700" fill="#b23a2e" stroke="#fff" stroke-width="3" paint-order="stroke">0</text>`;
+  t+=`<path d="M 149 0 H 163 M 156 -7 V 7" stroke="#b23a2e" stroke-width="1.5"/>`;
+  t+=`<circle cx="156" cy="0" r="22" fill="transparent"/>`;
+  document.getElementById('scaleSvg').innerHTML=t;
 })();
-// 각도기 회전 손잡이 (중심 기준, 더블클릭 시 원위치)
+function placeScale(){
+  scalePosition.x=Math.max(0,Math.min(SIZE,scalePosition.x));
+  scalePosition.y=Math.max(0,Math.min(SIZE,scalePosition.y));
+  sc.style.left=(scalePosition.x/PXKM-1)/KM*100+'%';
+  sc.style.top=scalePosition.y/SIZE*100+'%';
+}
 (function(){
-  const prot=document.getElementById('prot');
-  const rh=prot.querySelector('.rh'); let rot=false;
-  function pivot(){ const fr=document.getElementById('frame').getBoundingClientRect();
-    return {x:fr.left+prot.offsetLeft+prot.clientWidth/2,
-            y:fr.top+prot.offsetTop+prot.clientHeight/2}; }
-  rh.addEventListener('pointerdown',e=>{ e.stopPropagation();
-    rh.setPointerCapture(e.pointerId); rot=true; });
-  rh.addEventListener('pointermove',e=>{ if(!rot) return;
-    const p=pivot();
-    const a=Math.atan2(e.clientY-p.y, e.clientX-p.x)*180/Math.PI;
-    prot.style.transform=`rotate(${a}deg)`;
-    const r=((a%360)+360)%360;
-    document.getElementById('protRead').textContent="회전 "+(Math.round(r*2)/2)+"°"; });
-  rh.addEventListener('pointerup',()=>{ rot=false; });
-  rh.addEventListener('dblclick',()=>{ prot.style.transform="";
-    document.getElementById('protRead').textContent="회전 0°"; });
+  let drag=null;
+  sc.addEventListener('pointerdown',e=>{
+    if(e.button!==0||drag) return;
+    e.preventDefault();
+    sc.focus({preventScroll:true});
+    sc.setPointerCapture(e.pointerId);
+    sc.classList.add('grab');
+    const r=cv.getBoundingClientRect();
+    drag={id:e.pointerId,x:e.clientX,y:e.clientY,sx:scalePosition.x,sy:scalePosition.y,width:r.width,height:r.height};
+  });
+  sc.addEventListener('pointermove',e=>{
+    if(!drag||e.pointerId!==drag.id) return;
+    scalePosition.x=drag.sx+(e.clientX-drag.x)*SIZE/drag.width;
+    scalePosition.y=drag.sy+(e.clientY-drag.y)*SIZE/drag.height;
+    placeScale();
+  });
+  const end=e=>{
+    if(!drag||e.pointerId!==drag.id) return;
+    drag=null;sc.classList.remove('grab');
+    if(sc.hasPointerCapture(e.pointerId)) sc.releasePointerCapture(e.pointerId);
+  };
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>sc.addEventListener(type,end));
+  sc.addEventListener('keydown',e=>{
+    const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+    if(!d) return;
+    e.preventDefault();e.stopPropagation();
+    const step=e.shiftKey?CM*10:CM;
+    scalePosition.x+=d[0]*step;scalePosition.y+=d[1]*step;placeScale();
+  });
 })();
-// 도구 토글
-[['tgScale','scale'],['tgProt','prot'],['tgRuler','ruler']].forEach(([b,t])=>{
-  const bt=document.getElementById(b), el=document.getElementById(t);
-  bt.onclick=()=>{ el.classList.toggle('on');
-    bt.classList.toggle('on', el.classList.contains('on')); }; });
+document.getElementById('tgScale').onclick=()=>{
+  const on=sc.classList.toggle('on');
+  const bt=document.getElementById('tgScale');
+  bt.classList.toggle('on',on);bt.setAttribute('aria-pressed',String(on));
+  if(on){
+    // Start in the visible part of a horizontally scrolled mobile map.
+    const r=cv.getBoundingClientRect(), v=viewport.getBoundingClientRect();
+    scalePosition.x=((Math.max(r.left,v.left)+Math.min(r.right,v.right))/2-r.left)*SIZE/r.width;
+    scalePosition.y=((Math.max(r.top,v.top)+Math.min(r.bottom,v.bottom))/2-r.top)*SIZE/r.height;
+    placeScale();
+  }
+};
+function resizeMap(){
+  const r=cv.getBoundingClientRect();
+  if(!r.width||!r.height) return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const pixels=Math.max(1,Math.round(r.width*dpr));
+  if(cv.width!==pixels||cv.height!==pixels){
+    cv.width=cv.height=pixels;ctx.setTransform(pixels/SIZE,0,0,pixels/SIZE,0,0);
+  }
+  placeScale();
+  if(M.F) draw();
+}
+function centerMap(){
+  const r=cv.getBoundingClientRect(), v=viewport.getBoundingClientRect();
+  const p=mode===1&&P1.t?P1.t:{x:SIZE/2,y:SIZE/2};
+  viewport.scrollLeft+=r.left-v.left+p.x/SIZE*r.width-viewport.clientWidth/2;
+  viewport.scrollTop+=r.top-v.top+p.y/SIZE*r.height-viewport.clientHeight/2;
+}
+// A touch used to pan the map must not submit a location answer.
+let mapTouch=null, suppressMapClick=false;
+cv.addEventListener('pointerdown',e=>{
+  suppressMapClick=false;mapTouch={id:e.pointerId,x:e.clientX,y:e.clientY};
+});
+cv.addEventListener('pointermove',e=>{
+  if(mapTouch&&e.pointerId===mapTouch.id&&Math.hypot(e.clientX-mapTouch.x,e.clientY-mapTouch.y)>8) suppressMapClick=true;
+});
+cv.addEventListener('pointercancel',()=>{suppressMapClick=true;mapTouch=null;});
+cv.addEventListener('pointerup',()=>{mapTouch=null;});
+cv.addEventListener('click',e=>{
+  if(suppressMapClick){e.stopImmediatePropagation();suppressMapClick=false;}
+},true);
 
 /* ---------- 모드·버튼 ---------- */
 function setMode(m){ mode=m; fb.className='';
-  [1,2,3,4].forEach(i=>{ document.getElementById('tab'+i).classList.toggle('on',i===m);
+  [1,2,3,4].forEach(i=>{ const tab=document.getElementById('tab'+i);
+    tab.classList.toggle('on',i===m);tab.setAttribute('aria-selected',String(i===m));tab.tabIndex=i===m?0:-1;
     document.getElementById('m'+i).hidden=(i!==m); });
   document.getElementById('unitRow').style.display=(m===3||m===4)?'flex':'none';
   cv.style.cursor=(m===2)?'crosshair':'default';
@@ -821,7 +805,8 @@ function setMode(m){ mode=m; fb.className='';
 function newProblem(){ fb.className='';
   if(mode===1) newQ1(); else if(mode===2) newQ2();
   else if(mode===3) newQ3(); else newQ4();
-  draw(); }
+  draw();
+  requestAnimationFrame(centerMap); }
 document.getElementById('tab1').onclick=()=>setMode(1);
 document.getElementById('tab2').onclick=()=>setMode(2);
 document.getElementById('tab3').onclick=()=>setMode(3);
@@ -832,12 +817,21 @@ const okOf={in1:'ok1',in3:'ok3',in4:'ok4'};
 Object.keys(okOf).forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
   if(e.key==='Enter') document.getElementById(okOf[id]).click(); }));
 
+document.querySelectorAll('[role=tab]').forEach((tab,index)=>tab.addEventListener('keydown',e=>{
+  let next=index;
+  if(e.key==='ArrowRight') next=(index+1)%4;
+  else if(e.key==='ArrowLeft') next=(index+3)%4;
+  else if(e.key==='Home') next=0;
+  else if(e.key==='End') next=3;
+  else return;
+  e.preventDefault();setMode(next+1);document.getElementById('tab'+(next+1)).focus();
+}));
 genMap((Math.random()*1e9)|0);
 setMode(1);
+resizeMap();
+if(typeof ResizeObserver!=='undefined') new ResizeObserver(resizeMap).observe(frame);
+window.addEventListener('resize',resizeMap);
 
-// 시스템 다크모드 전환 시 캔버스 지도도 다시 그리기
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
-  if(M.F){ renderBase(M.F,M.N,M.cell); draw(); } });
 </script>
 
 </body>
